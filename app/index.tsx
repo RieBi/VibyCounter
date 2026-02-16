@@ -33,7 +33,7 @@ export default function Index() {
         </Pressable>
       </View>
 
-      <View className='flex-1 border'>
+      <View className='flex-1'>
         {counters.map((c) => (
           <CounterCard key={c} counterId={c}></CounterCard>
         ))}
