@@ -19,14 +19,14 @@ export default function CounterCard({ counterId }: CounterCardProps) {
   }
 
   return (
-    <View className='bg-cyan-800 p-2 rounded-2xl m-2'>
+    <View className='bg-cyan-600 border-cyan-700 border-2 p-2 rounded-2xl m-2'>
       <View className='flex-row items-center justify-between'>
         <View>
           <Text className='text-white text-xl font-bold'>{counter.label}</Text>
         </View>
         <View className='flex-row justify-end gap-3'>
           <TouchableOpacity
-            className='bg-red-500 p-2 rounded-lg'
+            className='border-red-500 border p-2 rounded-lg'
             activeOpacity={0.8}
             onPress={() => reset(counter.id)}
           >
@@ -34,7 +34,7 @@ export default function CounterCard({ counterId }: CounterCardProps) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            className='bg-purple-500 p-2 rounded-lg'
+            className='border-purple-500 border p-2 rounded-lg'
             activeOpacity={0.8}
             onPress={() => deleteCounter(counter.id)}
           >
@@ -45,19 +45,19 @@ export default function CounterCard({ counterId }: CounterCardProps) {
 
       <View className='flex-row justify-between px-[15%] items-center gap-5 pt-1'>
         <TouchableOpacity
-          className='bg-cyan-600 p-2 px-5 rounded-full justify-center items-center'
+          className='bg-cyan-500 border border-white p-2 px-5 rounded-full justify-center items-center'
           activeOpacity={0.7}
           onPress={() => increment(counter.id, -1)}
         >
           <Text className='text-white font-bold'>-1</Text>
         </TouchableOpacity>
 
-        <Text className='text-4xl text-blue-400 text-center'>
+        <Text className='text-4xl font-semibold text-blue-50 text-center'>
           {counter.count}
         </Text>
 
         <TouchableOpacity
-          className='bg-cyan-600 p-2 px-5 rounded-full justify-center items-center'
+          className='bg-cyan-500 border border-white p-2 px-5 rounded-full justify-center items-center'
           activeOpacity={0.7}
           onPress={() => increment(counter.id, 1)}
         >
