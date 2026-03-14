@@ -1,6 +1,9 @@
+import AddCounterModal from '@/components/AddCounterModal';
 import CounterCard from '@/components/CounterCard';
 import { useCounterStore } from '@/shop/counterShop';
-import { Pressable, Text, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
 export default function Index() {
@@ -11,32 +14,49 @@ export default function Index() {
   const addCounter = useCounterStore((state) => state.addCounter);
   const deleteAll = useCounterStore((state) => state.deleteAll);
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <View className='flex-1 justify-center'>
-      <View className='flex-row'>
-        <Pressable
-          className='p-3 bg-green-300 rounded-xl m-2'
-          onPress={() => {
-            addCounter('New Counter');
-          }}
-        >
-          <Text>Add Counter</Text>
-        </Pressable>
-
-        <Pressable
-          className='p-3 bg-green-300 rounded-xl m-2'
-          onPress={() => {
-            deleteAll();
-          }}
-        >
-          <Text>Delete All</Text>
-        </Pressable>
-      </View>
-
+    <View
+      className='flex-1 justify-center bg-white'
+      style={{
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+      }}
+    >
+      <StatusBar style='dark' />
       <View className='flex-1'>
-        {counters.map((c) => (
-          <CounterCard key={c} counterId={c}></CounterCard>
-        ))}
+        <View className='flex-row'>
+          <Pressable
+            className='p-3 bg-green-300 rounded-xl m-2'
+            onPress={() => {
+              addCounter('New Counter');
+            }}
+          >
+            <Text>Add Counter</Text>
+          </Pressable>
+
+          <Pressable
+            className='p-3 bg-green-300 rounded-xl m-2'
+            onPress={() => {
+              deleteAll();
+            }}
+          >
+            <Text>Delete All</Text>
+          </Pressable>
+        </View>
+
+        <ScrollView className='flex-1'>
+          {counters.map((c) => (
+            <CounterCard key={c} counterId={c}></CounterCard>
+          ))}
+
+          <View className='h-20'></View>
+        </ScrollView>
+
+        <View className='absolute right-6 bottom-6'>
+          <AddCounterModal></AddCounterModal>
+        </View>
       </View>
     </View>
   );
