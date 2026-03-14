@@ -1,6 +1,8 @@
 import { useCounterShop } from '@/shop/counterShop';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useState } from 'react';
 import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import CounterHistoryModal from './CounterHistoryModal';
 
 interface EditCounterModalProps {
   counterId: string | null;
@@ -12,6 +14,7 @@ export default function EditCounterModal({
   onClose,
 }: EditCounterModalProps) {
   const [label, setLabel] = useState('');
+  const [historyVisible, setHistoryVisible] = useState(false);
 
   const counterToEdit = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
@@ -47,9 +50,15 @@ export default function EditCounterModal({
     >
       <View className='flex-1 justify-center items-center bg-black/60 px-4'>
         <View className='bg-emerald-800 w-full p-6 rounded-2xl border border-emerald-700 shadow-lg'>
-          <Text className='text-white text-2xl font-bold mb-4'>
-            Edit Counter
-          </Text>
+          <View className='flex-row justify-between'>
+            <Text className='text-white text-2xl font-bold mb-4'>
+              Edit Counter
+            </Text>
+
+            <TouchableOpacity onPress={() => setHistoryVisible(true)}>
+              <MaterialIcons color='#EBF4FA' name='history' size={32} />
+            </TouchableOpacity>
+          </View>
 
           <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
 
@@ -78,6 +87,12 @@ export default function EditCounterModal({
           </View>
         </View>
       </View>
+
+      <CounterHistoryModal
+        counter={counterToEdit}
+        visible={historyVisible}
+        onClose={() => setHistoryVisible(false)}
+      />
     </Modal>
   );
 }

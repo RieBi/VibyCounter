@@ -1,4 +1,9 @@
-import { Counter } from '@/vibes/definitions';
+import {
+  Counter,
+  HistoryCreation,
+  HistoryIncrement,
+  HistoryReset,
+} from '@/vibes/definitions';
 import 'react-native-get-random-values';
 import { createMMKV } from 'react-native-mmkv';
 import { v4 as uuid } from 'uuid';
@@ -38,7 +43,15 @@ export const useCounterShop = create<CounterState>()(
 
       addCounter: (label) =>
         set((state) => ({
-          counters: [...state.counters, { id: uuid(), label, count: 0 }],
+          counters: [
+            ...state.counters,
+            {
+              id: uuid(),
+              label,
+              count: 0,
+              history: [{ type: HistoryCreation, timestamp: Date.now() }],
+            },
+          ],
         })),
 
       updateCounter: (id, updates) =>
@@ -52,7 +65,22 @@ export const useCounterShop = create<CounterState>()(
         set((state) => ({
           counters: state.counters.map((counter) =>
             counter.id === id
-              ? { ...counter, count: counter.count + amount }
+              ? {
+                  ...counter,
+                  count: counter.count + amount,
+                  history: [
+                    ...counter.history,
+                    {
+                      type: HistoryIncrement,
+                      timestamp: Date.now(),
+                      details: {
+                        incrementBy: amount,
+                        valueBefore: counter.count,
+                        valueAfter: counter.count + amount,
+                      },
+                    },
+                  ],
+                }
               : counter,
           ),
         })),
@@ -60,7 +88,16 @@ export const useCounterShop = create<CounterState>()(
       resetCounter: (id) =>
         set((state) => ({
           counters: state.counters.map((c) =>
-            c.id === id ? { ...c, count: 0 } : c,
+            c.id === id
+              ? {
+                  ...c,
+                  count: 0,
+                  history: [
+                    ...c.history,
+                    { type: HistoryReset, timestamp: Date.now() },
+                  ],
+                }
+              : c,
           ),
         })),
 
