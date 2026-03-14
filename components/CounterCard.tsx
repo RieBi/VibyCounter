@@ -1,4 +1,4 @@
-import { useCounterStore } from '@/shop/counterShop';
+import { useCounterShop } from '@/shop/counterShop';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 interface CounterCardProps {
@@ -6,13 +6,13 @@ interface CounterCardProps {
 }
 
 export default function CounterCard({ counterId }: CounterCardProps) {
-  const counter = useCounterStore((state) =>
+  const counter = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
   );
 
-  const increment = useCounterStore((state) => state.increment);
-  const reset = useCounterStore((state) => state.resetCounter);
-  const deleteCounter = useCounterStore((state) => state.deleteCounter);
+  const increment = useCounterShop((state) => state.increment);
+  const reset = useCounterShop((state) => state.resetCounter);
+  const deleteCounter = useCounterShop((state) => state.deleteCounter);
 
   if (!counter) {
     return null;

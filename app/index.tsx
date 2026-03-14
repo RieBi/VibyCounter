@@ -1,18 +1,18 @@
 import AddCounterModal from '@/components/AddCounterModal';
 import CounterCard from '@/components/CounterCard';
-import { useCounterStore } from '@/shop/counterShop';
+import { useCounterShop } from '@/shop/counterShop';
 import { StatusBar } from 'expo-status-bar';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
 export default function Index() {
-  const counters = useCounterStore(
+  const counters = useCounterShop(
     useShallow((state) => state.counters.map((c) => c.id)),
   );
 
-  const addCounter = useCounterStore((state) => state.addCounter);
-  const deleteAll = useCounterStore((state) => state.deleteAll);
+  const addCounter = useCounterShop((state) => state.addCounter);
+  const deleteAll = useCounterShop((state) => state.deleteAll);
 
   const insets = useSafeAreaInsets();
 

@@ -30,7 +30,7 @@ interface CounterState {
   deleteAll: () => void;
 }
 
-export const useCounterStore = create<CounterState>()(
+export const useCounterShop = create<CounterState>()(
   persist(
     (set) => ({
       counters: [],

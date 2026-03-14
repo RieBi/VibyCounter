@@ -1,4 +1,4 @@
-import { useCounterStore } from '@/shop/counterShop';
+import { useCounterShop } from '@/shop/counterShop';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useState } from 'react';
 import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -8,7 +8,7 @@ export default function AddCounterModal() {
 
   const [label, setLabel] = useState('');
 
-  const addCounter = useCounterStore((state) => state.addCounter);
+  const addCounter = useCounterShop((state) => state.addCounter);
 
   const handleSave = () => {
     if (label.trim() === '') {
