@@ -3,9 +3,10 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 interface CounterCardProps {
   counterId: string;
+  onEdit: () => void;
 }
 
-export default function CounterCard({ counterId }: CounterCardProps) {
+export default function CounterCard({ counterId, onEdit }: CounterCardProps) {
   const counter = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
   );
@@ -31,6 +32,14 @@ export default function CounterCard({ counterId }: CounterCardProps) {
             onPress={() => reset(counter.id)}
           >
             <Text className='text-white font-bold'>Reset</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className='border-orange-500 border p-2 rounded-lg'
+            activeOpacity={0.8}
+            onPress={() => onEdit()}
+          >
+            <Text className='text-white font-bold'>Edit</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

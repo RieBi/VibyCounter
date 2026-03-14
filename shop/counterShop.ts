@@ -24,6 +24,7 @@ interface CounterState {
   counters: Counter[];
 
   addCounter: (label: string) => void;
+  updateCounter: (id: string, updates: Partial<Counter>) => void;
   increment: (id: string, amount: number) => void;
   resetCounter: (id: string) => void;
   deleteCounter: (id: string) => void;
@@ -38,6 +39,13 @@ export const useCounterShop = create<CounterState>()(
       addCounter: (label) =>
         set((state) => ({
           counters: [...state.counters, { id: uuid(), label, count: 0 }],
+        })),
+
+      updateCounter: (id, updates) =>
+        set((state) => ({
+          counters: state.counters.map((counter) =>
+            counter.id === id ? { ...counter, ...updates } : counter,
+          ),
         })),
 
       increment: (id, amount) =>
