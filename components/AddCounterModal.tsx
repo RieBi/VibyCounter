@@ -4,10 +4,12 @@ import { useState } from 'react';
 import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface AddCounterModalProps {
-  selectedGroupId: string
+  selectedGroupId: string;
 }
 
-export default function AddCounterModal( { selectedGroupId }: AddCounterModalProps) {
+export default function AddCounterModal({
+  selectedGroupId,
+}: AddCounterModalProps) {
   const [isModalVisible, setModalVisible] = useState(false);
 
   const [label, setLabel] = useState('');
@@ -51,9 +53,11 @@ export default function AddCounterModal( { selectedGroupId }: AddCounterModalPro
               New Counter
             </Text>
 
+            <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
+
             <TextInput
               className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
-              placeholder='Counter name'
+              placeholder='New counter...'
               placeholderTextColor='azure'
               value={label}
               onChangeText={setLabel}
