@@ -2,9 +2,10 @@ import AddCounterModal from '@/components/AddCounterModal';
 import CounterCard from '@/components/CounterCard';
 import EditCounterModal from '@/components/EditCounterModal';
 import { useCounterShop } from '@/shop/counterShop';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -14,9 +15,6 @@ export default function Index() {
   );
 
   const [editingId, setEditingId] = useState<string | null>(null);
-
-  const addCounter = useCounterShop((state) => state.addCounter);
-  const deleteAll = useCounterShop((state) => state.deleteAll);
 
   const insets = useSafeAreaInsets();
 
@@ -30,24 +28,14 @@ export default function Index() {
     >
       <StatusBar style='dark' />
       <View className='flex-1'>
-        <View className='flex-row'>
-          <Pressable
-            className='p-3 bg-green-300 rounded-xl m-2'
-            onPress={() => {
-              addCounter('New Counter');
-            }}
-          >
-            <Text>Add Counter</Text>
-          </Pressable>
-
-          <Pressable
-            className='p-3 bg-green-300 rounded-xl m-2'
-            onPress={() => {
-              deleteAll();
-            }}
-          >
-            <Text>Delete All</Text>
-          </Pressable>
+        <View className='flex-row items-center p-2 gap-3'>
+          <AntDesign
+            className='p-1 ps-2'
+            name='menu'
+            size={24}
+            color='#27272a'
+          />
+          <Text className='font-semibold text-2xl text-zinc-800'>Counters</Text>
         </View>
 
         <ScrollView className='flex-1'>
