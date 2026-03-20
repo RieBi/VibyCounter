@@ -1,15 +1,15 @@
 import { useCounterShop } from '@/shop/counterShop';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  BackHandler,
   Dimensions,
   Pressable,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -24,6 +24,7 @@ interface GroupDrawerProps {
 }
 
 const DRAWER_WIDTH = Dimensions.get('window').width * 0.75;
+const CLOSE_THRESHOLD = DRAWER_WIDTH * 0.35;
 const DURATION = 250;
 
 export default function GroupDrawer({
@@ -42,22 +43,17 @@ export default function GroupDrawer({
   const translateX = useSharedValue(-DRAWER_WIDTH);
   const backdropOpacity = useSharedValue(0);
 
-  useEffect(() => {
-    if (!visible) return;
-
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      onClose();
-      return true;
-    });
-
-    return () => sub.remove();
-  }, [visible, onClose]);
+  const swipedClosed = useRef(false);
 
   useEffect(() => {
     if (visible) {
+      swipedClosed.current = false;
       setMounted(true);
       translateX.value = withTiming(0, { duration: DURATION });
       backdropOpacity.value = withTiming(1, { duration: DURATION });
+    } else if (swipedClosed.current) {
+      const timeout = setTimeout(() => setMounted(false), DURATION);
+      return () => clearTimeout(timeout);
     } else {
       translateX.value = withTiming(-DRAWER_WIDTH, { duration: DURATION });
       backdropOpacity.value = withTiming(0, { duration: DURATION });
@@ -65,6 +61,26 @@ export default function GroupDrawer({
       return () => clearTimeout(timeout);
     }
   }, [backdropOpacity, translateX, visible]);
+
+  const panGesture = Gesture.Pan()
+    .runOnJS(true)
+    .activeOffsetX([-10, 10])
+    .onUpdate((e) => {
+      const clampedX = Math.min(0, e.translationX);
+      translateX.value = clampedX;
+      backdropOpacity.value = 1 + clampedX / DRAWER_WIDTH;
+    })
+    .onEnd((e) => {
+      if (e.translationX < -CLOSE_THRESHOLD || e.velocityX < -500) {
+        translateX.value = withTiming(-DRAWER_WIDTH, { duration: DURATION });
+        backdropOpacity.value = withTiming(0, { duration: DURATION });
+        swipedClosed.current = true;
+        onClose();
+      } else {
+        translateX.value = withTiming(0, { duration: DURATION });
+        backdropOpacity.value = withTiming(1, { duration: DURATION });
+      }
+    });
 
   const drawerStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
@@ -105,59 +121,61 @@ export default function GroupDrawer({
         <Pressable className='flex-1' onPress={onClose} />
       </Animated.View>
 
-      <Animated.View
-        style={[drawerStyle, { width: DRAWER_WIDTH }]}
-        className='absolute top-0 bottom-0 left-0 bg-white border-r border-zinc-200'
-      >
-        <View className='flex-1'>
-          <Text className='text-zinc-800 text-xl font-bold p-4 pb-2'>
-            Groups
-          </Text>
-
+      <GestureDetector gesture={panGesture}>
+        <Animated.View
+          style={[drawerStyle, { width: DRAWER_WIDTH }]}
+          className='absolute top-0 bottom-0 left-0 bg-white border-r border-zinc-200'
+        >
           <View className='flex-1'>
-            {groups.map((group) => (
-              <TouchableOpacity
-                key={group.id}
-                className={`flex-row items-center justify-between px-4 py-3 ${
-                  group.id === selectedGroupId ? 'bg-zinc-100' : ''
-                }`}
-                onPress={() => handleSelect(group.id)}
-              >
-                <Text className='text-zinc-800 text-lg'>{group.name}</Text>
-                {group.id !== groups[0]?.id && (
-                  <TouchableOpacity
-                    onPress={() => handleDelete(group.id)}
-                    hitSlop={8}
-                  >
-                    <MaterialIcons
-                      name='delete-outline'
-                      size={20}
-                      color='#ef4444'
-                    />
-                  </TouchableOpacity>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
+            <Text className='text-zinc-800 text-xl font-bold p-4 pb-2'>
+              Groups
+            </Text>
 
-          <View className='flex-row items-center p-4 gap-2 border-t border-zinc-200'>
-            <TextInput
-              className='flex-1 bg-zinc-100 text-zinc-800 p-3 rounded-xl'
-              placeholder='New group...'
-              placeholderTextColor='#a1a1aa'
-              value={newGroupName}
-              onChangeText={setNewGroupName}
-              onSubmitEditing={handleAddGroup}
-            />
-            <TouchableOpacity
-              className='bg-emerald-600 p-3 rounded-xl'
-              onPress={handleAddGroup}
-            >
-              <MaterialIcons name='add' size={22} color='white' />
-            </TouchableOpacity>
+            <View className='flex-1'>
+              {groups.map((group) => (
+                <TouchableOpacity
+                  key={group.id}
+                  className={`flex-row items-center justify-between px-4 py-3 ${
+                    group.id === selectedGroupId ? 'bg-zinc-100' : ''
+                  }`}
+                  onPress={() => handleSelect(group.id)}
+                >
+                  <Text className='text-zinc-800 text-lg'>{group.name}</Text>
+                  {group.id !== groups[0]?.id && (
+                    <TouchableOpacity
+                      onPress={() => handleDelete(group.id)}
+                      hitSlop={8}
+                    >
+                      <MaterialIcons
+                        name='delete-outline'
+                        size={20}
+                        color='#ef4444'
+                      />
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View className='flex-row items-center p-4 gap-2 border-t border-zinc-200'>
+              <TextInput
+                className='flex-1 bg-zinc-100 text-zinc-800 p-3 rounded-xl'
+                placeholder='New group...'
+                placeholderTextColor='#a1a1aa'
+                value={newGroupName}
+                onChangeText={setNewGroupName}
+                onSubmitEditing={handleAddGroup}
+              />
+              <TouchableOpacity
+                className='bg-emerald-600 p-3 rounded-xl'
+                onPress={handleAddGroup}
+              >
+                <MaterialIcons name='add' size={22} color='white' />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Animated.View>
+        </Animated.View>
+      </GestureDetector>
     </View>
   );
 }
