@@ -3,6 +3,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useState } from 'react';
 import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CounterHistoryModal from './CounterHistoryModal';
+import ConfirmModal from './reusable/ConfirmModal';
 import CounterSettingsFields from './reusable/CounterSettingsFields';
 
 interface EditCounterModalProps {
@@ -14,7 +15,11 @@ export default function EditCounterModal({
   counterId,
   onClose,
 }: EditCounterModalProps) {
+  const updateCounter = useCounterShop((state) => state.updateCounter);
+  const deleteCounter = useCounterShop((state) => state.deleteCounter);
+
   const [historyVisible, setHistoryVisible] = useState(false);
+  const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
   const [label, setLabel] = useState('');
   const [defaultValue, setDefaultValue] = useState('0');
@@ -24,8 +29,6 @@ export default function EditCounterModal({
   const counterToEdit = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
   );
-
-  const updateCounter = useCounterShop((state) => state.updateCounter);
 
   useEffect(() => {
     if (counterToEdit) {
@@ -53,6 +56,16 @@ export default function EditCounterModal({
     onClose();
   };
 
+  const handleDelete = () => {
+    if (!counterId) {
+      return;
+    }
+
+    deleteCounter(counterId);
+    setConfirmDeleteVisible(false);
+    onClose();
+  };
+
   if (!counterId) {
     return null;
   }
@@ -71,9 +84,18 @@ export default function EditCounterModal({
               Edit Counter
             </Text>
 
-            <TouchableOpacity onPress={() => setHistoryVisible(true)}>
-              <MaterialIcons color='#EBF4FA' name='history' size={32} />
-            </TouchableOpacity>
+            <View className='flex-row gap-4'>
+              <TouchableOpacity onPress={() => setConfirmDeleteVisible(true)}>
+                <MaterialIcons
+                  color='#f87171'
+                  name='delete-outline'
+                  size={30}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setHistoryVisible(true)}>
+                <MaterialIcons color='#EBF4FA' name='history' size={32} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
@@ -117,6 +139,14 @@ export default function EditCounterModal({
         counter={counterToEdit}
         visible={historyVisible}
         onClose={() => setHistoryVisible(false)}
+      />
+
+      <ConfirmModal
+        visible={confirmDeleteVisible}
+        title='Delete Counter'
+        message={`Are you sure you want to delete "${counterToEdit?.label}"? This cannot be undone.`}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDeleteVisible(false)}
       />
     </Modal>
   );
