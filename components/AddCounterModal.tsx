@@ -2,6 +2,7 @@ import { useCounterShop } from '@/shop/counterShop';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useState } from 'react';
 import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import CounterSettingsFields from './reusable/CounterSettingsFields';
 
 interface AddCounterModalProps {
   selectedGroupId: string;
@@ -13,6 +14,9 @@ export default function AddCounterModal({
   const [isModalVisible, setModalVisible] = useState(false);
 
   const [label, setLabel] = useState('');
+  const [defaultValue, setDefaultValue] = useState('0');
+  const [incrementBy, setIncrementBy] = useState('1');
+  const [decrementBy, setDecrementBy] = useState('1');
 
   const addCounter = useCounterShop((state) => state.addCounter);
 
@@ -21,13 +25,21 @@ export default function AddCounterModal({
       return;
     }
 
-    addCounter(label, selectedGroupId);
+    addCounter(label, selectedGroupId, {
+      defaultValue: Number(defaultValue) || 0,
+      incrementBy: Number(incrementBy) || 1,
+      decrementBy: Number(decrementBy) || 1,
+      allowNegative: false,
+    });
 
     handleClose();
   };
 
   const handleClose = () => {
     setLabel('');
+    setDefaultValue('0');
+    setIncrementBy('1');
+    setDecrementBy('1');
     setModalVisible(false);
   };
 
@@ -58,10 +70,19 @@ export default function AddCounterModal({
             <TextInput
               className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
               placeholder='New counter...'
-              placeholderTextColor='azure'
+              placeholderTextColor='#a7f3d0'
               value={label}
               onChangeText={setLabel}
             ></TextInput>
+
+            <CounterSettingsFields
+              defaultValue={defaultValue}
+              incrementBy={incrementBy}
+              decrementBy={decrementBy}
+              onChangeDefault={setDefaultValue}
+              onChangeIncrement={setIncrementBy}
+              onChangeDecrement={setDecrementBy}
+            />
 
             <View className='flex-row justify-end gap-3'>
               <TouchableOpacity

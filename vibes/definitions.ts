@@ -3,7 +3,8 @@ export interface Counter {
   groupId: string;
   label: string;
   count: number;
-  settings?: {
+  settings: {
+    defaultValue: number;
     incrementBy: number;
     decrementBy: number;
     allowNegative: boolean;

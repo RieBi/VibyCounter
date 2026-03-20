@@ -3,6 +3,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useState } from 'react';
 import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CounterHistoryModal from './CounterHistoryModal';
+import CounterSettingsFields from './reusable/CounterSettingsFields';
 
 interface EditCounterModalProps {
   counterId: string | null;
@@ -13,8 +14,12 @@ export default function EditCounterModal({
   counterId,
   onClose,
 }: EditCounterModalProps) {
-  const [label, setLabel] = useState('');
   const [historyVisible, setHistoryVisible] = useState(false);
+
+  const [label, setLabel] = useState('');
+  const [defaultValue, setDefaultValue] = useState('0');
+  const [incrementBy, setIncrementBy] = useState('1');
+  const [decrementBy, setDecrementBy] = useState('1');
 
   const counterToEdit = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
@@ -25,6 +30,9 @@ export default function EditCounterModal({
   useEffect(() => {
     if (counterToEdit) {
       setLabel(counterToEdit.label);
+      setDefaultValue(String(counterToEdit.settings.defaultValue ?? 0));
+      setIncrementBy(String(counterToEdit.settings.incrementBy ?? 1));
+      setDecrementBy(String(counterToEdit.settings.decrementBy ?? 1));
     }
   }, [counterToEdit]);
 
@@ -33,7 +41,15 @@ export default function EditCounterModal({
       return;
     }
 
-    updateCounter(counterId, { label });
+    updateCounter(counterId, {
+      label,
+      settings: {
+        defaultValue: Number(defaultValue) || 0,
+        incrementBy: Number(incrementBy) || 1,
+        decrementBy: Number(decrementBy) || 1,
+        allowNegative: counterToEdit?.settings.allowNegative ?? false,
+      },
+    });
     onClose();
   };
 
@@ -69,6 +85,15 @@ export default function EditCounterModal({
             value={label}
             onChangeText={setLabel}
           ></TextInput>
+
+          <CounterSettingsFields
+            defaultValue={defaultValue}
+            incrementBy={incrementBy}
+            decrementBy={decrementBy}
+            onChangeDefault={setDefaultValue}
+            onChangeIncrement={setIncrementBy}
+            onChangeDecrement={setDecrementBy}
+          />
 
           <View className='flex-row justify-end gap-3'>
             <TouchableOpacity

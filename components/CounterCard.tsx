@@ -56,9 +56,11 @@ export default function CounterCard({ counterId, onEdit }: CounterCardProps) {
         <TouchableOpacity
           className='bg-cyan-500 border border-white p-2 px-5 rounded-full justify-center items-center'
           activeOpacity={0.7}
-          onPress={() => increment(counter.id, -1)}
+          onPress={() => increment(counter.id, -counter.settings.decrementBy)}
         >
-          <Text className='text-white font-bold'>-1</Text>
+          <Text className='text-white font-bold'>
+            {formatNumber(-counter.settings.decrementBy)}
+          </Text>
         </TouchableOpacity>
 
         <Text className='text-4xl font-semibold text-blue-50 text-center'>
@@ -68,11 +70,17 @@ export default function CounterCard({ counterId, onEdit }: CounterCardProps) {
         <TouchableOpacity
           className='bg-cyan-500 border border-white p-2 px-5 rounded-full justify-center items-center'
           activeOpacity={0.7}
-          onPress={() => increment(counter.id, 1)}
+          onPress={() => increment(counter.id, counter.settings.incrementBy)}
         >
-          <Text className='text-white font-bold'>+1</Text>
+          <Text className='text-white font-bold'>
+            {formatNumber(counter.settings.incrementBy)}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
   );
+}
+
+function formatNumber(num: number): string {
+  return (num >= 0 ? '+' : '') + num;
 }

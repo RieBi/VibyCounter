@@ -31,7 +31,11 @@ interface CounterState {
   counters: Counter[];
   groups: Group[];
 
-  addCounter: (label: string, groupId?: string) => void;
+  addCounter: (
+    label: string,
+    groupId?: string,
+    settings?: Counter['settings'],
+  ) => void;
   updateCounter: (id: string, updates: Partial<Counter>) => void;
   increment: (id: string, amount: number) => void;
   resetCounter: (id: string) => void;
@@ -48,7 +52,11 @@ export const useCounterShop = create<CounterState>()(
       counters: [],
       groups: [DefaultGroup],
 
-      addCounter: (label, groupId) =>
+      addCounter: (
+        label: string,
+        groupId?: string,
+        settings?: Counter['settings'],
+      ) =>
         set((state) => ({
           counters: [
             ...state.counters,
@@ -58,6 +66,12 @@ export const useCounterShop = create<CounterState>()(
               count: 0,
               history: [{ type: HistoryCreation, timestamp: Date.now() }],
               groupId: groupId ?? DefaultGroup.id,
+              settings: settings ?? {
+                defaultValue: 0,
+                incrementBy: 1,
+                decrementBy: 1,
+                allowNegative: false,
+              },
             },
           ],
         })),
@@ -99,7 +113,7 @@ export const useCounterShop = create<CounterState>()(
             c.id === id
               ? {
                   ...c,
-                  count: 0,
+                  count: c.settings.defaultValue,
                   history: [
                     ...c.history,
                     { type: HistoryReset, timestamp: Date.now() },
