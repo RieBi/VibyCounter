@@ -3,7 +3,11 @@ import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useState } from 'react';
 import { Modal, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-export default function AddCounterModal() {
+interface AddCounterModalProps {
+  selectedGroupId: string
+}
+
+export default function AddCounterModal( { selectedGroupId }: AddCounterModalProps) {
   const [isModalVisible, setModalVisible] = useState(false);
 
   const [label, setLabel] = useState('');
@@ -15,7 +19,7 @@ export default function AddCounterModal() {
       return;
     }
 
-    addCounter(label);
+    addCounter(label, selectedGroupId);
 
     handleClose();
   };

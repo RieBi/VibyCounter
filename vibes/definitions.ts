@@ -1,6 +1,6 @@
 export interface Counter {
   id: string;
-  groupId?: string | null;
+  groupId: string;
   label: string;
   count: number;
   settings?: {
@@ -16,6 +16,11 @@ export interface Group {
   id: string;
   name: string;
 }
+
+export const DefaultGroup: Group = {
+  id: 'Default',
+  name: 'Default',
+};
 
 export const HistoryCreation = 1;
 export const HistoryIncrement = 2;

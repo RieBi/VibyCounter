@@ -1,7 +1,9 @@
 import AddCounterModal from '@/components/AddCounterModal';
 import CounterCard from '@/components/CounterCard';
 import EditCounterModal from '@/components/EditCounterModal';
+import GroupDrawer from '@/components/GroupDrawer';
 import { useCounterShop } from '@/shop/counterShop';
+import { DefaultGroup } from '@/vibes/definitions';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
@@ -10,11 +12,23 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
 export default function Index() {
-  const counters = useCounterShop(
-    useShallow((state) => state.counters.map((c) => c.id)),
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>(
+    DefaultGroup.id,
   );
 
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const counters = useCounterShop(
+    useShallow((state) =>
+      state.counters
+        .filter((c) => c.groupId === selectedGroupId)
+        .map((c) => c.id),
+    ),
+  );
+
+  const selectedGroup = useCounterShop(
+    (state) => state.groups.filter((g) => g.id === selectedGroupId)[0],
+  );
 
   const insets = useSafeAreaInsets();
 
@@ -34,8 +48,11 @@ export default function Index() {
             name='menu'
             size={24}
             color='#27272a'
+            onPress={() => setDrawerVisible(true)}
           />
-          <Text className='font-semibold text-2xl text-zinc-800'>Counters</Text>
+          <Text className='font-semibold text-2xl text-zinc-800'>
+            Counters - {selectedGroup.name}
+          </Text>
         </View>
 
         <ScrollView className='flex-1'>
@@ -51,12 +68,19 @@ export default function Index() {
         </ScrollView>
 
         <View className='absolute right-6 bottom-6'>
-          <AddCounterModal></AddCounterModal>
+          <AddCounterModal selectedGroupId={selectedGroupId}></AddCounterModal>
         </View>
 
         <EditCounterModal
           counterId={editingId}
           onClose={() => setEditingId(null)}
+        />
+
+        <GroupDrawer
+          visible={drawerVisible}
+          selectedGroupId={selectedGroupId}
+          onSelectGroup={setSelectedGroupId}
+          onClose={() => setDrawerVisible(false)}
         />
       </View>
     </View>

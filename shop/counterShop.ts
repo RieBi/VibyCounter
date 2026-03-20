@@ -1,5 +1,7 @@
 import {
   Counter,
+  DefaultGroup,
+  Group,
   HistoryCreation,
   HistoryIncrement,
   HistoryReset,
@@ -27,21 +29,26 @@ const zustandStorage = {
 
 interface CounterState {
   counters: Counter[];
+  groups: Group[];
 
-  addCounter: (label: string) => void;
+  addCounter: (label: string, groupId?: string) => void;
   updateCounter: (id: string, updates: Partial<Counter>) => void;
   increment: (id: string, amount: number) => void;
   resetCounter: (id: string) => void;
   deleteCounter: (id: string) => void;
   deleteAll: () => void;
+  addGroup: (name: string) => void;
+  renameGroup: (id: string, newName: string) => void;
+  deleteGroup: (id: string) => void;
 }
 
 export const useCounterShop = create<CounterState>()(
   persist(
     (set) => ({
       counters: [],
+      groups: [DefaultGroup],
 
-      addCounter: (label) =>
+      addCounter: (label, groupId) =>
         set((state) => ({
           counters: [
             ...state.counters,
@@ -50,6 +57,7 @@ export const useCounterShop = create<CounterState>()(
               label,
               count: 0,
               history: [{ type: HistoryCreation, timestamp: Date.now() }],
+              groupId: groupId ?? DefaultGroup.id,
             },
           ],
         })),
@@ -109,6 +117,25 @@ export const useCounterShop = create<CounterState>()(
       deleteAll: () =>
         set(() => ({
           counters: [],
+        })),
+      addGroup: (name) =>
+        set((state) => ({
+          groups: [...state.groups, { id: uuid(), name }],
+        })),
+      renameGroup: (id, newName) =>
+        set((state) => ({
+          groups: state.groups.map((group) =>
+            group.id === id ? { ...group, name: newName } : group,
+          ),
+        })),
+      deleteGroup: (id) =>
+        set((state) => ({
+          groups: state.groups.filter((group) => group.id !== id),
+          counters: state.counters.map((counter) =>
+            counter.groupId === id
+              ? { ...counter, groupId: DefaultGroup.id }
+              : counter,
+          ),
         })),
     }),
     {
