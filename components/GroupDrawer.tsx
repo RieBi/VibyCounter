@@ -2,6 +2,7 @@ import { useCounterShop } from '@/shop/counterShop';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useState } from 'react';
 import {
+  BackHandler,
   Dimensions,
   Pressable,
   Text,
@@ -40,6 +41,17 @@ export default function GroupDrawer({
 
   const translateX = useSharedValue(-DRAWER_WIDTH);
   const backdropOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true;
+    });
+
+    return () => sub.remove();
+  }, [visible, onClose]);
 
   useEffect(() => {
     if (visible) {
