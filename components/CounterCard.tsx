@@ -22,9 +22,9 @@ export default function CounterCard({ counterId, onEdit }: CounterCardProps) {
   return (
     <View className='bg-cyan-600 border-cyan-700 border-2 p-2 rounded-2xl m-2'>
       <View className='flex-row items-center justify-between'>
-        <View>
+        <TouchableOpacity activeOpacity={0.8} onPress={() => onEdit()}>
           <Text className='text-white text-xl font-bold'>{counter.label}</Text>
-        </View>
+        </TouchableOpacity>
         <View className='flex-row justify-end gap-3'>
           <TouchableOpacity
             className='border-red-500 border p-2 rounded-lg'
