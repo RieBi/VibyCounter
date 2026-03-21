@@ -1,5 +1,6 @@
 import { useCounterShop } from '@/shop/counterShop';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import * as Haptics from 'expo-haptics';
 import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 
 interface CounterCardProps {
@@ -65,7 +66,10 @@ export default function CounterCard({
           activeOpacity={0.7}
           style={{ backgroundColor: btnBg }}
           className='h-14 w-14 rounded-full items-center justify-center'
-          onPress={() => increment(counter.id, -counter.settings.decrementBy)}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+            return increment(counter.id, -counter.settings.decrementBy);
+          }}
         >
           <MaterialIcons name='remove' size={28} color={textColor} />
         </TouchableOpacity>
@@ -81,7 +85,10 @@ export default function CounterCard({
           activeOpacity={0.7}
           style={{ backgroundColor: btnBg }}
           className='h-14 w-14 rounded-full items-center justify-center'
-          onPress={() => increment(counter.id, counter.settings.incrementBy)}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+            return increment(counter.id, counter.settings.incrementBy);
+          }}
         >
           <MaterialIcons name='add' size={28} color={textColor} />
         </TouchableOpacity>
