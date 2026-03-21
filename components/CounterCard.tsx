@@ -1,86 +1,91 @@
 import { useCounterShop } from '@/shop/counterShop';
-import { Text, TouchableOpacity, View } from 'react-native';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 
 interface CounterCardProps {
   counterId: string;
+  color?: string;
   onEdit: () => void;
 }
 
-export default function CounterCard({ counterId, onEdit }: CounterCardProps) {
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '');
+  return [
+    parseInt(h.substring(0, 2), 16),
+    parseInt(h.substring(2, 4), 16),
+    parseInt(h.substring(4, 6), 16),
+  ];
+}
+
+function isLightColor(hex: string): boolean {
+  const [r, g, b] = hexToRgb(hex);
+  // Relative luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55;
+}
+
+export default function CounterCard({
+  counterId,
+  color = '#0e7490',
+  onEdit,
+}: CounterCardProps) {
   const counter = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
   );
 
   const increment = useCounterShop((state) => state.increment);
-  const reset = useCounterShop((state) => state.resetCounter);
-  const deleteCounter = useCounterShop((state) => state.deleteCounter);
 
-  if (!counter) {
-    return null;
-  }
+  if (!counter) return null;
+
+  const light = isLightColor(color);
+  const textColor = light ? '#18181b' : '#fafafa';
+  const btnBg = light ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)';
 
   return (
-    <View className='bg-cyan-600 border-cyan-700 border-2 p-2 rounded-2xl m-2'>
+    <Pressable
+      onPress={onEdit}
+      style={{ backgroundColor: color }}
+      className='mx-3 my-1.5 px-4 py-3 rounded-2xl'
+    >
       <View className='flex-row items-center justify-between'>
-        <TouchableOpacity activeOpacity={0.8} onPress={() => onEdit()}>
-          <Text className='text-white text-xl font-bold'>{counter.label}</Text>
+        <Text
+          style={{ color: textColor }}
+          className='text-sm font-semibold flex-1'
+          numberOfLines={1}
+        >
+          {counter.label}
+        </Text>
+        <TouchableOpacity hitSlop={8}>
+          <MaterialIcons name='more-vert' size={20} color={textColor} />
         </TouchableOpacity>
-        <View className='flex-row justify-end gap-3'>
-          <TouchableOpacity
-            className='border-red-500 border p-2 rounded-lg'
-            activeOpacity={0.8}
-            onPress={() => reset(counter.id)}
-          >
-            <Text className='text-white font-bold'>Reset</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className='border-orange-500 border p-2 rounded-lg'
-            activeOpacity={0.8}
-            onPress={() => onEdit()}
-          >
-            <Text className='text-white font-bold'>Edit</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className='border-purple-500 border p-2 rounded-lg'
-            activeOpacity={0.8}
-            onPress={() => deleteCounter(counter.id)}
-          >
-            <Text className='text-white font-bold'>Delete</Text>
-          </TouchableOpacity>
-        </View>
       </View>
 
-      <View className='flex-row justify-between px-[15%] items-center gap-5 pt-1'>
+      <View className='flex-row items-center justify-center gap-8 pt-1 pb-3'>
         <TouchableOpacity
-          className='bg-cyan-500 border border-white p-2 px-5 rounded-full justify-center items-center'
           activeOpacity={0.7}
+          style={{ backgroundColor: btnBg }}
+          className='h-14 w-14 rounded-full items-center justify-center'
           onPress={() => increment(counter.id, -counter.settings.decrementBy)}
         >
-          <Text className='text-white font-bold'>
-            {formatNumber(-counter.settings.decrementBy)}
-          </Text>
+          <MaterialIcons name='remove' size={28} color={textColor} />
         </TouchableOpacity>
 
-        <Text className='text-4xl font-semibold text-blue-50 text-center'>
+        <Text
+          style={{ color: textColor, minWidth: 60 }}
+          className='text-4xl font-bold text-center'
+        >
           {counter.count}
         </Text>
 
         <TouchableOpacity
-          className='bg-cyan-500 border border-white p-2 px-5 rounded-full justify-center items-center'
           activeOpacity={0.7}
+          style={{ backgroundColor: btnBg }}
+          className='h-14 w-14 rounded-full items-center justify-center'
           onPress={() => increment(counter.id, counter.settings.incrementBy)}
         >
-          <Text className='text-white font-bold'>
-            {formatNumber(counter.settings.incrementBy)}
-          </Text>
+          <MaterialIcons name='add' size={28} color={textColor} />
         </TouchableOpacity>
       </View>
-    </View>
+    </Pressable>
   );
-}
-
-function formatNumber(num: number): string {
-  return (num >= 0 ? '+' : '') + num;
 }
