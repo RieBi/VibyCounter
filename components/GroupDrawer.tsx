@@ -2,18 +2,16 @@ import { useCounterShop } from '@/shop/counterShop';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useRef, useState } from 'react';
 import {
+  BackHandler,
   Dimensions,
   Keyboard,
   Pressable,
+  ScrollView,
   Text,
   TouchableOpacity,
-  View,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import {
-  KeyboardAwareScrollView,
-  useReanimatedKeyboardAnimation,
-} from 'react-native-keyboard-controller';
+import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -48,15 +46,17 @@ export default function GroupDrawer({
 
   const translateX = useSharedValue(-DRAWER_WIDTH);
   const backdropOpacity = useSharedValue(0);
-
   const swipedClosed = useRef(false);
-
   const insets = useSafeAreaInsets();
 
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
 
-  const keyboardMarginStyle = useAnimatedStyle(() => ({
-    marginBottom: Math.max(keyboardHeight.value, -insets.bottom),
+  const bottomBarStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateY: Math.min(0, keyboardHeight.value + insets.bottom),
+      },
+    ],
   }));
 
   useEffect(() => {
@@ -76,9 +76,21 @@ export default function GroupDrawer({
     }
   }, [backdropOpacity, translateX, visible]);
 
+  useEffect(() => {
+    if (!visible) return;
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true;
+    });
+
+    return () => sub.remove();
+  }, [visible, onClose]);
+
   const panGesture = Gesture.Pan()
     .runOnJS(true)
-    .activeOffsetX([-10, 10])
+    .activeOffsetX([-20, 20])
+    .failOffsetY([-15, 15])
     .onUpdate((e) => {
       const clampedX = Math.min(0, e.translationX);
       translateX.value = clampedX;
@@ -118,10 +130,14 @@ export default function GroupDrawer({
 
   const handleDelete = (id: string) => {
     deleteGroup(id);
-
     if (id === selectedGroupId) {
       handleSelect(groups[0].id);
     }
+  };
+
+  const handleClose = () => {
+    Keyboard.dismiss();
+    onClose();
   };
 
   if (!mounted) return null;
@@ -129,73 +145,72 @@ export default function GroupDrawer({
   return (
     <Pressable
       className='absolute inset-0 z-50'
-      onPress={() => {
-        Keyboard.dismiss();
-      }}
+      onPress={() => Keyboard.dismiss()}
     >
       <Animated.View
         style={backdropStyle}
         className='absolute inset-0 bg-black/30'
       >
-        <Pressable className='flex-1' onPress={onClose} />
+        <Pressable className='flex-1' onPress={handleClose} />
       </Animated.View>
 
       <GestureDetector gesture={panGesture}>
         <Animated.View
-          style={[drawerStyle, keyboardMarginStyle, { width: DRAWER_WIDTH }]}
+          style={[drawerStyle, { width: DRAWER_WIDTH }]}
           className='absolute top-0 bottom-0 left-0 bg-white border-r border-zinc-200'
         >
-          <KeyboardAwareScrollView
-            contentContainerStyle={{ flexGrow: 1 }}
-            keyboardShouldPersistTaps='handled'
-          >
-            <Text className='text-zinc-800 text-xl font-bold p-4 pb-2'>
-              Groups
-            </Text>
+          {/* Fixed header */}
+          <Text className='text-zinc-800 text-xl font-bold p-4 pb-2'>
+            Groups
+          </Text>
 
-            <View className='flex-1'>
-              {groups.map((group) => (
-                <TouchableOpacity
-                  key={group.id}
-                  className={`flex-row items-center justify-between px-4 py-3 ${
-                    group.id === selectedGroupId ? 'bg-zinc-100' : ''
-                  }`}
-                  onPress={() => handleSelect(group.id)}
-                >
-                  <Text className='text-zinc-800 text-lg'>{group.name}</Text>
-                  {group.id !== groups[0]?.id && (
-                    <TouchableOpacity
-                      onPress={() => handleDelete(group.id)}
-                      hitSlop={8}
-                    >
-                      <MaterialIcons
-                        name='delete-outline'
-                        size={20}
-                        color='#ef4444'
-                      />
-                    </TouchableOpacity>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View className='flex-row items-center p-4 gap-2 border-t border-zinc-200'>
-              <VibyInput
-                className='flex-1 bg-zinc-100 text-zinc-800 p-3 rounded-xl'
-                placeholder='New group...'
-                placeholderTextColor='#a1a1aa'
-                value={newGroupName}
-                onChangeText={setNewGroupName}
-                onSubmitEditing={handleAddGroup}
-              />
+          {/* Scrollable group list */}
+          <ScrollView className='flex-1' keyboardShouldPersistTaps='handled'>
+            {groups.map((group) => (
               <TouchableOpacity
-                className='bg-emerald-600 p-3 rounded-xl'
-                onPress={handleAddGroup}
+                key={group.id}
+                className={`flex-row items-center justify-between px-4 py-3 ${
+                  group.id === selectedGroupId ? 'bg-zinc-100' : ''
+                }`}
+                onPress={() => handleSelect(group.id)}
               >
-                <MaterialIcons name='add' size={22} color='white' />
+                <Text className='text-zinc-800 text-lg'>{group.name}</Text>
+                {group.id !== groups[0]?.id && (
+                  <TouchableOpacity
+                    onPress={() => handleDelete(group.id)}
+                    hitSlop={8}
+                  >
+                    <MaterialIcons
+                      name='delete-outline'
+                      size={20}
+                      color='#ef4444'
+                    />
+                  </TouchableOpacity>
+                )}
               </TouchableOpacity>
-            </View>
-          </KeyboardAwareScrollView>
+            ))}
+          </ScrollView>
+
+          {/* Fixed bottom bar, animated with keyboard */}
+          <Animated.View
+            style={bottomBarStyle}
+            className='flex-row items-center p-4 gap-2 border-t border-zinc-200'
+          >
+            <VibyInput
+              className='flex-1 bg-zinc-100 text-zinc-800 p-3 rounded-xl'
+              placeholder='New group...'
+              placeholderTextColor='#a1a1aa'
+              value={newGroupName}
+              onChangeText={setNewGroupName}
+              onSubmitEditing={handleAddGroup}
+            />
+            <TouchableOpacity
+              className='bg-emerald-600 p-3 rounded-xl'
+              onPress={handleAddGroup}
+            >
+              <MaterialIcons name='add' size={22} color='white' />
+            </TouchableOpacity>
+          </Animated.View>
         </Animated.View>
       </GestureDetector>
     </Pressable>
