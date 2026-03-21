@@ -31,6 +31,7 @@ export default function EditCounterModal({
   const [confirmResetVisible, setConfirmResetVisible] = useState(false);
 
   const [label, setLabel] = useState('');
+  const [currentValue, setCurrentValue] = useState('0');
   const [defaultValue, setDefaultValue] = useState('0');
   const [incrementBy, setIncrementBy] = useState('1');
   const [decrementBy, setDecrementBy] = useState('1');
@@ -42,6 +43,7 @@ export default function EditCounterModal({
   useEffect(() => {
     if (counterToEdit) {
       setLabel(counterToEdit.label);
+      setCurrentValue(String(counterToEdit.count));
       setDefaultValue(String(counterToEdit.settings.defaultValue ?? 0));
       setIncrementBy(String(counterToEdit.settings.incrementBy ?? 1));
       setDecrementBy(String(counterToEdit.settings.decrementBy ?? 1));
@@ -55,6 +57,7 @@ export default function EditCounterModal({
 
     updateCounter(counterId, {
       label,
+      count: Number(currentValue) || 0,
       settings: {
         defaultValue: Number(defaultValue) || 0,
         incrementBy: Number(incrementBy) || 1,
@@ -126,6 +129,18 @@ export default function EditCounterModal({
               value={label}
               onChangeText={setLabel}
             ></TextInput>
+
+            <Text className='text-emerald-300 text-sm mb-1 ml-1'>
+              Current value
+            </Text>
+
+            <TextInput
+              className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
+              keyboardType='numeric'
+              value={currentValue}
+              onChangeText={setCurrentValue}
+            />
+
             <CounterSettingsFields
               defaultValue={defaultValue}
               incrementBy={incrementBy}
