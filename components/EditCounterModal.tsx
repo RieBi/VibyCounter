@@ -24,9 +24,11 @@ export default function EditCounterModal({
 }: EditCounterModalProps) {
   const updateCounter = useCounterShop((state) => state.updateCounter);
   const deleteCounter = useCounterShop((state) => state.deleteCounter);
+  const resetCounter = useCounterShop((state) => state.resetCounter);
 
   const [historyVisible, setHistoryVisible] = useState(false);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
+  const [confirmResetVisible, setConfirmResetVisible] = useState(false);
 
   const [label, setLabel] = useState('');
   const [defaultValue, setDefaultValue] = useState('0');
@@ -71,6 +73,15 @@ export default function EditCounterModal({
     deleteCounter(counterId);
     setConfirmDeleteVisible(false);
     onClose();
+  };
+
+  const handleReset = () => {
+    if (!counterId) {
+      return;
+    }
+
+    resetCounter(counterId);
+    setConfirmResetVisible(false);
   };
 
   if (!counterId) {
@@ -123,6 +134,12 @@ export default function EditCounterModal({
               onChangeIncrement={setIncrementBy}
               onChangeDecrement={setDecrementBy}
             />
+            <TouchableOpacity
+              className='mb-4 self-start'
+              onPress={() => setConfirmResetVisible(true)}
+            >
+              <Text className='text-rose-400 font-semibold'>Reset counter</Text>
+            </TouchableOpacity>
             <View className='flex-row justify-end gap-3'>
               <TouchableOpacity
                 className='bg-rose-600/60 p-3 px-6 rounded-xl'
@@ -150,9 +167,17 @@ export default function EditCounterModal({
       <ConfirmModal
         visible={confirmDeleteVisible}
         title='Delete Counter'
-        message={`Are you sure you want to delete "${counterToEdit?.label}"? This cannot be undone.`}
+        message={`Are you sure you want to delete counter "${counterToEdit?.label}"? This cannot be undone.`}
         onConfirm={handleDelete}
         onCancel={() => setConfirmDeleteVisible(false)}
+      />
+      <ConfirmModal
+        visible={confirmResetVisible}
+        title='Reset Counter'
+        message={`Are you sure you want to reset counter "${counterToEdit?.label}"?`}
+        confirmLabel='Reset'
+        onConfirm={handleReset}
+        onCancel={() => setConfirmResetVisible(false)}
       />
     </Modal>
   );
