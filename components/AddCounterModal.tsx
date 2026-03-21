@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import CounterSettingsFields from './reusable/CounterSettingsFields';
 import VibyInput from './reusable/VibyInput';
 
@@ -67,53 +68,55 @@ export default function AddCounterModal({
         visible={isModalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <Pressable
-          className='flex-1 justify-center items-center bg-black/60 px-4'
-          onPress={handleClose}
-        >
+        <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }}>
           <Pressable
-            className='w-full'
-            onPress={() => {
-              Keyboard.dismiss();
-            }}
+            className='flex-1 justify-center items-center bg-black/60 px-4'
+            onPress={handleClose}
           >
-            <View className='bg-emerald-800 w-full p-6 rounded-2xl border border-emerald-700 shadow-lg'>
-              <Text className='text-white text-2xl font-bold mb-4'>
-                New Counter
-              </Text>
-              <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
-              <VibyInput
-                className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
-                placeholder='New counter...'
-                placeholderTextColor='#a7f3d0'
-                value={label}
-                onChangeText={setLabel}
-              />
-              <CounterSettingsFields
-                defaultValue={defaultValue}
-                incrementBy={incrementBy}
-                decrementBy={decrementBy}
-                onChangeDefault={setDefaultValue}
-                onChangeIncrement={setIncrementBy}
-                onChangeDecrement={setDecrementBy}
-              />
-              <View className='flex-row justify-end gap-3'>
-                <TouchableOpacity
-                  className='bg-rose-600/60 p-3 px-6 rounded-xl'
-                  onPress={() => handleClose()}
-                >
-                  <Text className='text-white font-bold'>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className='bg-lime-600 p-3 px-6 rounded-xl'
-                  onPress={() => handleSave()}
-                >
-                  <Text className='text-white font-bold'>Create</Text>
-                </TouchableOpacity>
+            <Pressable
+              className='w-full'
+              onPress={() => {
+                Keyboard.dismiss();
+              }}
+            >
+              <View className='bg-emerald-800 w-full p-6 rounded-2xl border border-emerald-700 shadow-lg'>
+                <Text className='text-white text-2xl font-bold mb-4'>
+                  New Counter
+                </Text>
+                <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
+                <VibyInput
+                  className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
+                  placeholder='New counter...'
+                  placeholderTextColor='#a7f3d0'
+                  value={label}
+                  onChangeText={setLabel}
+                />
+                <CounterSettingsFields
+                  defaultValue={defaultValue}
+                  incrementBy={incrementBy}
+                  decrementBy={decrementBy}
+                  onChangeDefault={setDefaultValue}
+                  onChangeIncrement={setIncrementBy}
+                  onChangeDecrement={setDecrementBy}
+                />
+                <View className='flex-row justify-end gap-3'>
+                  <TouchableOpacity
+                    className='bg-rose-600/60 p-3 px-6 rounded-xl'
+                    onPress={() => handleClose()}
+                  >
+                    <Text className='text-white font-bold'>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className='bg-lime-600 p-3 px-6 rounded-xl'
+                    onPress={() => handleSave()}
+                  >
+                    <Text className='text-white font-bold'>Create</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAwareScrollView>
       </Modal>
     </View>
   );

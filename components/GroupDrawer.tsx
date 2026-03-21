@@ -10,11 +10,16 @@ import {
   View,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  KeyboardAwareScrollView,
+  useReanimatedKeyboardAnimation,
+} from 'react-native-keyboard-controller';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
+  withTiming
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import VibyInput from './reusable/VibyInput';
 
 interface GroupDrawerProps {
@@ -45,6 +50,14 @@ export default function GroupDrawer({
   const backdropOpacity = useSharedValue(0);
 
   const swipedClosed = useRef(false);
+
+  const insets = useSafeAreaInsets();
+
+  const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
+
+  const keyboardMarginStyle = useAnimatedStyle(() => ({
+    marginBottom: Math.max(keyboardHeight.value, -insets.bottom),
+  }));
 
   useEffect(() => {
     if (visible) {
@@ -129,10 +142,10 @@ export default function GroupDrawer({
 
       <GestureDetector gesture={panGesture}>
         <Animated.View
-          style={[drawerStyle, { width: DRAWER_WIDTH }]}
+          style={[drawerStyle, keyboardMarginStyle, { width: DRAWER_WIDTH }]}
           className='absolute top-0 bottom-0 left-0 bg-white border-r border-zinc-200'
         >
-          <View className='flex-1'>
+          <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }}>
             <Text className='text-zinc-800 text-xl font-bold p-4 pb-2'>
               Groups
             </Text>
@@ -179,7 +192,7 @@ export default function GroupDrawer({
                 <MaterialIcons name='add' size={22} color='white' />
               </TouchableOpacity>
             </View>
-          </View>
+          </KeyboardAwareScrollView>
         </Animated.View>
       </GestureDetector>
     </Pressable>
