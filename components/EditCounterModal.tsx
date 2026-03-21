@@ -100,7 +100,10 @@ export default function EditCounterModal({
       visible={!!counterId}
       onRequestClose={onClose}
     >
-      <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps='handled'
+      >
         <Pressable
           className='flex-1 justify-center items-center bg-black/60 px-4'
           onPress={onClose}

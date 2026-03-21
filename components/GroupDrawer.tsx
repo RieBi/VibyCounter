@@ -17,7 +17,7 @@ import {
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withTiming
+  withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import VibyInput from './reusable/VibyInput';
@@ -145,7 +145,10 @@ export default function GroupDrawer({
           style={[drawerStyle, keyboardMarginStyle, { width: DRAWER_WIDTH }]}
           className='absolute top-0 bottom-0 left-0 bg-white border-r border-zinc-200'
         >
-          <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }}>
+          <KeyboardAwareScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps='handled'
+          >
             <Text className='text-zinc-800 text-xl font-bold p-4 pb-2'>
               Groups
             </Text>

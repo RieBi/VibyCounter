@@ -68,7 +68,10 @@ export default function AddCounterModal({
         visible={isModalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <KeyboardAwareScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps='handled'
+        >
           <Pressable
             className='flex-1 justify-center items-center bg-black/60 px-4'
             onPress={handleClose}
