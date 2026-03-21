@@ -2,16 +2,17 @@ import { useCounterShop } from '@/shop/counterShop';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useState } from 'react';
 import {
+  Keyboard,
   Modal,
   Pressable,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import CounterHistoryModal from './CounterHistoryModal';
 import ConfirmModal from './reusable/ConfirmModal';
 import CounterSettingsFields from './reusable/CounterSettingsFields';
+import VibyInput from './reusable/VibyInput';
 
 interface EditCounterModalProps {
   counterId: string | null;
@@ -102,7 +103,12 @@ export default function EditCounterModal({
         className='flex-1 justify-center items-center bg-black/60 px-4'
         onPress={onClose}
       >
-        <Pressable className='w-full'>
+        <Pressable
+          className='w-full'
+          onPress={() => {
+            Keyboard.dismiss();
+          }}
+        >
           <View className='bg-emerald-800 w-full p-6 rounded-2xl border border-emerald-700 shadow-lg'>
             <View className='flex-row justify-between'>
               <Text className='text-white text-2xl font-bold mb-4'>
@@ -122,19 +128,19 @@ export default function EditCounterModal({
               </View>
             </View>
             <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
-            <TextInput
+            <VibyInput
               className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
               placeholder='Counter name'
               placeholderTextColor='azure'
               value={label}
               onChangeText={setLabel}
-            ></TextInput>
+            />
 
             <Text className='text-emerald-300 text-sm mb-1 ml-1'>
               Current value
             </Text>
 
-            <TextInput
+            <VibyInput
               className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
               keyboardType='numeric'
               value={currentValue}

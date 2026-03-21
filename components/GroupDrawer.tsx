@@ -3,9 +3,9 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
+  Keyboard,
   Pressable,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -15,6 +15,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import VibyInput from './reusable/VibyInput';
 
 interface GroupDrawerProps {
   visible: boolean;
@@ -113,7 +114,12 @@ export default function GroupDrawer({
   if (!mounted) return null;
 
   return (
-    <View className='absolute inset-0 z-50'>
+    <Pressable
+      className='absolute inset-0 z-50'
+      onPress={() => {
+        Keyboard.dismiss();
+      }}
+    >
       <Animated.View
         style={backdropStyle}
         className='absolute inset-0 bg-black/30'
@@ -158,7 +164,7 @@ export default function GroupDrawer({
             </View>
 
             <View className='flex-row items-center p-4 gap-2 border-t border-zinc-200'>
-              <TextInput
+              <VibyInput
                 className='flex-1 bg-zinc-100 text-zinc-800 p-3 rounded-xl'
                 placeholder='New group...'
                 placeholderTextColor='#a1a1aa'
@@ -176,6 +182,6 @@ export default function GroupDrawer({
           </View>
         </Animated.View>
       </GestureDetector>
-    </View>
+    </Pressable>
   );
 }

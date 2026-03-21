@@ -2,14 +2,15 @@ import { useCounterShop } from '@/shop/counterShop';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useState } from 'react';
 import {
+  Keyboard,
   Modal,
   Pressable,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import CounterSettingsFields from './reusable/CounterSettingsFields';
+import VibyInput from './reusable/VibyInput';
 
 interface AddCounterModalProps {
   selectedGroupId: string;
@@ -70,19 +71,24 @@ export default function AddCounterModal({
           className='flex-1 justify-center items-center bg-black/60 px-4'
           onPress={handleClose}
         >
-          <Pressable className='w-full'>
+          <Pressable
+            className='w-full'
+            onPress={() => {
+              Keyboard.dismiss();
+            }}
+          >
             <View className='bg-emerald-800 w-full p-6 rounded-2xl border border-emerald-700 shadow-lg'>
               <Text className='text-white text-2xl font-bold mb-4'>
                 New Counter
               </Text>
               <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
-              <TextInput
+              <VibyInput
                 className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
                 placeholder='New counter...'
                 placeholderTextColor='#a7f3d0'
                 value={label}
                 onChangeText={setLabel}
-              ></TextInput>
+              />
               <CounterSettingsFields
                 defaultValue={defaultValue}
                 incrementBy={incrementBy}

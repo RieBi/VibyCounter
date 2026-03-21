@@ -1,4 +1,5 @@
-import { Text, TextInput, View } from 'react-native';
+import { Text, View } from 'react-native';
+import VibyInput from './VibyInput';
 
 interface CounterSettingsFieldsProps {
   defaultValue: string;
@@ -60,7 +61,7 @@ function Field({
   return (
     <View>
       <Text className='text-emerald-300 text-sm mb-1 ml-1'>{label}</Text>
-      <TextInput
+      <VibyInput
         className='bg-emerald-900 text-white p-3 rounded-xl border border-lime-600 text-lg'
         keyboardType='numeric'
         value={value}
