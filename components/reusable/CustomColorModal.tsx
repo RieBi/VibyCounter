@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ColorWheel from './ColorWheel';
+import VibyInput from './VibyInput';
 
 interface CustomColorModalProps {
   visible: boolean;
@@ -20,6 +21,8 @@ function randomColor(): string {
   return rgbToHex(r, g, b);
 }
 
+const isValidHex = (s: string): boolean => /^#[0-9A-Fa-f]{6}$/.test(s);
+
 export default function CustomColorModal({
   visible,
   currentColor,
@@ -30,14 +33,24 @@ export default function CustomColorModal({
   const [g, setG] = useState(0);
   const [b, setB] = useState(0);
 
+  const [hexInput, setHexInput] = useState('');
+  const [editingHex, setEditingHex] = useState(false);
+
   useEffect(() => {
     if (visible) {
       const [cr, cg, cb] = hexToRgb(currentColor);
       setR(cr);
       setG(cg);
       setB(cb);
+      setEditingHex(false);
     }
   }, [visible, currentColor]);
+
+  useEffect(() => {
+    if (!editingHex) {
+      setHexInput(rgbToHex(r, g, b).toUpperCase());
+    }
+  }, [r, g, b, editingHex]);
 
   const preview = rgbToHex(r, g, b);
 
@@ -46,6 +59,17 @@ export default function CustomColorModal({
     setR(rr);
     setG(rg);
     setB(rb);
+  };
+
+  const handleHexSubmit = () => {
+    const normalized = hexInput.startsWith('#') ? hexInput : `#${hexInput}`;
+    if (isValidHex(normalized)) {
+      const [nr, ng, nb] = hexToRgb(normalized);
+      setR(nr);
+      setG(ng);
+      setB(nb);
+    }
+    setEditingHex(false);
   };
 
   return (
@@ -74,12 +98,37 @@ export default function CustomColorModal({
                 style={{ backgroundColor: preview }}
                 className='h-16 rounded-xl mb-5 items-center justify-center'
               >
-                <Text
-                  style={{ color: isLightColor(preview) ? '#18181b' : 'white' }}
-                  className='font-mono text-sm'
-                >
-                  {preview.toUpperCase()}
-                </Text>
+                {editingHex ? (
+                  <VibyInput
+                    className='text-center font-mono text-sm p-0 bg-transparent'
+                    style={{
+                      color: isLightColor(preview) ? '#18181b' : 'white',
+                    }}
+                    value={hexInput}
+                    onChangeText={(t) => setHexInput(t.toUpperCase())}
+                    onSubmitEditing={handleHexSubmit}
+                    onBlur={handleHexSubmit}
+                    autoFocus
+                    maxLength={7}
+                    autoCapitalize='characters'
+                  />
+                ) : (
+                  <Pressable
+                    onPress={() => {
+                      setHexInput(preview.toUpperCase());
+                      setEditingHex(true);
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: isLightColor(preview) ? '#18181b' : 'white',
+                      }}
+                      className='font-mono text-sm'
+                    >
+                      {preview.toUpperCase()}
+                    </Text>
+                  </Pressable>
+                )}
               </View>
               <ColorWheel
                 r={r}
