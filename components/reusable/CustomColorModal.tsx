@@ -59,6 +59,8 @@ export default function CustomColorModal({
     setR(rr);
     setG(rg);
     setB(rb);
+
+    setEditingHex(false);
   };
 
   const handleHexSubmit = () => {
@@ -84,7 +86,12 @@ export default function CustomColorModal({
           className='flex-1 justify-center items-center bg-black/60 px-4'
           onPress={onClose}
         >
-          <Pressable className='w-full'>
+          <Pressable
+            className='w-full'
+            onPress={() => {
+              setEditingHex(false);
+            }}
+          >
             <View className='bg-emerald-800 w-full p-6 rounded-2xl border border-emerald-700'>
               <View className='flex-row items-center justify-between mb-4'>
                 <Text className='text-white text-xl font-bold'>
@@ -138,11 +145,39 @@ export default function CustomColorModal({
                   setR(nr);
                   setG(ng);
                   setB(nb);
+
+                  if (editingHex) {
+                    setEditingHex(false);
+                  }
                 }}
               />
-              <SliderRow label='R' value={r} onChange={setR} color='#f87171' />
-              <SliderRow label='G' value={g} onChange={setG} color='#4ade80' />
-              <SliderRow label='B' value={b} onChange={setB} color='#60a5fa' />
+              <SliderRow
+                label='R'
+                value={r}
+                onChange={(v) => {
+                  setEditingHex(false);
+                  setR(v);
+                }}
+                color='#f87171'
+              />
+              <SliderRow
+                label='G'
+                value={g}
+                onChange={(v) => {
+                  setEditingHex(false);
+                  setG(v);
+                }}
+                color='#4ade80'
+              />
+              <SliderRow
+                label='B'
+                value={b}
+                onChange={(v) => {
+                  setEditingHex(false);
+                  setB(v);
+                }}
+                color='#60a5fa'
+              />
               <View className='flex-row justify-end gap-3 mt-4'>
                 <TouchableOpacity
                   className='bg-rose-600/60 p-3 px-6 rounded-xl'

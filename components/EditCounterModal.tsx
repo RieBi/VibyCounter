@@ -33,6 +33,7 @@ export default function EditCounterModal({
   const [historyVisible, setHistoryVisible] = useState(false);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const [confirmResetVisible, setConfirmResetVisible] = useState(false);
+  const [customColorOpen, setCustomColorOpen] = useState(false);
 
   const [label, setLabel] = useState('');
   const [currentValue, setCurrentValue] = useState('0');
@@ -110,6 +111,7 @@ export default function EditCounterModal({
       <KeyboardAwareScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps='handled'
+        enabled={!customColorOpen}
       >
         <Pressable
           className='flex-1 justify-center items-center bg-black/60 px-4'
@@ -141,7 +143,11 @@ export default function EditCounterModal({
                   </TouchableOpacity>
                 </View>
               </View>
-              <ColorPickerBar selected={color} onSelect={setColor} />
+              <ColorPickerBar
+                selected={color}
+                onSelect={setColor}
+                onCustomModalChange={setCustomColorOpen}
+              />
               <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
               <VibyInput
                 className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'

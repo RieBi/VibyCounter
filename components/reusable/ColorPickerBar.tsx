@@ -1,8 +1,8 @@
+import { isLightColor } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import CustomColorModal from './CustomColorModal';
-import { isLightColor } from '@/vibes/definitions';
 
 const PRESETS = [
   '#0e7490',
@@ -22,15 +22,27 @@ const PRESETS = [
 interface ColorPickerBarProps {
   selected: string;
   onSelect: (color: string) => void;
+  onCustomModalChange?: (open: boolean) => void;
 }
 
 export default function ColorPickerBar({
   selected,
   onSelect,
+  onCustomModalChange,
 }: ColorPickerBarProps) {
   const [customVisible, setCustomVisible] = useState(false);
 
   const isPreset = PRESETS.includes(selected);
+
+  const openCustom = () => {
+    setCustomVisible(true);
+    onCustomModalChange?.(true);
+  };
+
+  const closeCustom = () => {
+    setCustomVisible(false);
+    onCustomModalChange?.(false);
+  };
 
   return (
     <View className='flex-row items-center flex-wrap gap-2 mb-4'>
@@ -48,7 +60,7 @@ export default function ColorPickerBar({
       ))}
 
       <TouchableOpacity
-        onPress={() => setCustomVisible(true)}
+        onPress={openCustom}
         style={!isPreset ? { backgroundColor: selected } : undefined}
         className={`h-8 w-8 rounded-full items-center justify-center ${
           isPreset
@@ -70,9 +82,9 @@ export default function ColorPickerBar({
         currentColor={selected}
         onSelect={(color) => {
           onSelect(color);
-          setCustomVisible(false);
+          closeCustom();
         }}
-        onClose={() => setCustomVisible(false)}
+        onClose={closeCustom}
       />
     </View>
   );
