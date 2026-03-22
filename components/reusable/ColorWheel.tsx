@@ -1,14 +1,13 @@
 import { useMemo } from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
 
 const PADDING = 12;
-const SIZE = 220 + PADDING * 2;
+const WHEEL_PX = 200;
+const SIZE = WHEEL_PX + PADDING * 2;
 const CENTER = SIZE / 2;
-const OUTER_R = (SIZE - PADDING * 2) / 2;
-const HUE_STEPS = 48;
-const SAT_RINGS = 8;
+const OUTER_R = WHEEL_PX / 2;
 
 interface ColorWheelProps {
   r: number;
@@ -67,6 +66,60 @@ function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
   return [h, s, l];
 }
 
+function generateWheelBmp(size: number): string {
+  const center = size / 2;
+  const rowSize = Math.ceil((size * 3) / 4) * 4;
+  const dataSize = rowSize * size;
+  const fileSize = 54 + dataSize;
+
+  const buf = new Uint8Array(fileSize);
+  const view = new DataView(buf.buffer);
+
+  buf[0] = 0x42;
+  buf[1] = 0x4d;
+  view.setUint32(2, fileSize, true);
+  view.setUint32(10, 54, true);
+  view.setUint32(14, 40, true);
+  view.setInt32(18, size, true);
+  view.setInt32(22, size, true);
+  view.setUint16(26, 1, true);
+  view.setUint16(28, 24, true);
+  view.setUint32(34, dataSize, true);
+
+  for (let y = 0; y < size; y++) {
+    const row = size - 1 - y;
+    for (let x = 0; x < size; x++) {
+      const dx = x - center + 0.5;
+      const dy = y - center + 0.5;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const offset = 54 + row * rowSize + x * 3;
+
+      let angle = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
+      if (angle < 0) angle += 360;
+      const sat = Math.min(dist / center, 1);
+      const [cr, cg, cb] = hslToRgb(angle, sat, 0.5);
+      buf[offset] = cb;
+      buf[offset + 1] = cg;
+      buf[offset + 2] = cr;
+    }
+  }
+
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  let base64 = '';
+  for (let i = 0; i < buf.length; i += 3) {
+    const b0 = buf[i];
+    const b1 = i + 1 < buf.length ? buf[i + 1] : 0;
+    const b2 = i + 2 < buf.length ? buf[i + 2] : 0;
+    base64 += chars[b0 >> 2];
+    base64 += chars[((b0 & 3) << 4) | (b1 >> 4)];
+    base64 += i + 1 < buf.length ? chars[((b1 & 15) << 2) | (b2 >> 6)] : '=';
+    base64 += i + 2 < buf.length ? chars[b2 & 63] : '=';
+  }
+
+  return `data:image/bmp;base64,${base64}`;
+}
+
 function polar(angle: number, radius: number) {
   const rad = ((angle - 90) * Math.PI) / 180;
   return {
@@ -75,53 +128,13 @@ function polar(angle: number, radius: number) {
   };
 }
 
-function arcSegmentPath(
-  innerR: number,
-  outerR: number,
-  startAngle: number,
-  endAngle: number,
-): string {
-  const p1 = polar(startAngle, outerR);
-  const p2 = polar(endAngle, outerR);
-  const p3 = polar(endAngle, innerR);
-  const p4 = polar(startAngle, innerR);
-  const large = endAngle - startAngle > 180 ? 1 : 0;
-  return [
-    `M ${p1.x} ${p1.y}`,
-    `A ${outerR} ${outerR} 0 ${large} 1 ${p2.x} ${p2.y}`,
-    `L ${p3.x} ${p3.y}`,
-    `A ${innerR} ${innerR} 0 ${large} 0 ${p4.x} ${p4.y}`,
-    'Z',
-  ].join(' ');
-}
-
 export default function ColorWheel({
   r,
   g,
   b,
   onColorChange,
 }: ColorWheelProps) {
-  const segments = useMemo(() => {
-    const result: { path: string; color: string }[] = [];
-    const hueStep = 360 / HUE_STEPS;
-    const ringWidth = OUTER_R / SAT_RINGS;
-
-    for (let hi = 0; hi < HUE_STEPS; hi++) {
-      const hue = hi * hueStep;
-      const nextHue = hue + hueStep + 0.5; // slight overlap
-      for (let si = 0; si < SAT_RINGS; si++) {
-        const innerR = si * ringWidth;
-        const outerR = (si + 1) * ringWidth;
-        const sat = (si + 1) / SAT_RINGS;
-        const [cr, cg, cb] = hslToRgb(hue, sat, 0.5);
-        result.push({
-          path: arcSegmentPath(innerR, outerR, hue, nextHue),
-          color: `rgb(${cr},${cg},${cb})`,
-        });
-      }
-    }
-    return result;
-  }, []);
+  const wheelUri = useMemo(() => generateWheelBmp(WHEEL_PX), []);
 
   const [h, s] = rgbToHsl(r, g, b);
   const indicatorDist = s * OUTER_R;
@@ -130,11 +143,11 @@ export default function ColorWheel({
   const handleTouch = (x: number, y: number) => {
     const dx = x - CENTER;
     const dy = y - CENTER;
-    const dist = Math.sqrt(dx * dx + dy * dy);
 
     let angle = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
     if (angle < 0) angle += 360;
 
+    const dist = Math.sqrt(dx * dx + dy * dy);
     const sat = Math.min(dist / OUTER_R, 1);
     const [nr, ng, nb] = hslToRgb(angle, sat, 0.5);
     onColorChange(nr, ng, nb);
@@ -154,14 +167,19 @@ export default function ColorWheel({
   return (
     <View className='items-center mb-4'>
       <GestureDetector gesture={composed}>
-        <View>
-          <Svg width={SIZE} height={SIZE}>
-            {segments.map((seg, i) => (
-              <Path key={i} d={seg.path} fill={seg.color} />
-            ))}
-            {/* White center dot */}
-            <Circle cx={CENTER} cy={CENTER} r={4} fill='white' opacity={0.3} />
-            {/* Indicator */}
+        <View style={{ width: SIZE, height: SIZE }}>
+          <Image
+            source={{ uri: wheelUri }}
+            style={{
+              width: WHEEL_PX,
+              height: WHEEL_PX,
+              borderRadius: WHEEL_PX / 2,
+              position: 'absolute',
+              left: PADDING,
+              top: PADDING,
+            }}
+          />
+          <Svg width={SIZE} height={SIZE} style={{ position: 'absolute' }}>
             <Circle
               cx={indicator.x}
               cy={indicator.y}
