@@ -6,12 +6,12 @@ export default function VibyInput(props: TextInputProps) {
 
   return (
     <TextInput
-      {...props}
       ref={ref}
       selectTextOnFocus={true}
       onSelectionChange={() => {
         ref.current?.focus();
       }}
+      {...props}
     />
   );
 }

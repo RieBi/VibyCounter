@@ -93,6 +93,7 @@ export default function AddCounterModal({
                   placeholderTextColor='#a7f3d0'
                   value={label}
                   onChangeText={setLabel}
+                  selectTextOnFocus={false}
                 />
                 <CounterSettingsFields
                   defaultValue={defaultValue}
