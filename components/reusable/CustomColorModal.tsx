@@ -3,6 +3,8 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Slider from '@react-native-community/slider';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import ColorWheel from './ColorWheel';
 
 interface CustomColorModalProps {
   visible: boolean;
@@ -53,52 +55,63 @@ export default function CustomColorModal({
       visible={visible}
       onRequestClose={onClose}
     >
-      <Pressable
-        className='flex-1 justify-center items-center bg-black/60 px-4'
-        onPress={onClose}
-      >
-        <Pressable className='w-full'>
-          <View className='bg-emerald-800 w-full p-6 rounded-2xl border border-emerald-700'>
-            <View className='flex-row items-center justify-between mb-4'>
-              <Text className='text-white text-xl font-bold'>Custom Color</Text>
-              <TouchableOpacity onPress={handleRandom}>
-                <MaterialIcons name='casino' size={26} color='#6ee7b7' />
-              </TouchableOpacity>
-            </View>
-
-            <View
-              style={{ backgroundColor: preview }}
-              className='h-16 rounded-xl mb-5 items-center justify-center'
-            >
-              <Text
-                style={{ color: isLightColor(preview) ? '#18181b' : 'white' }}
-                className='font-mono text-sm'
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Pressable
+          className='flex-1 justify-center items-center bg-black/60 px-4'
+          onPress={onClose}
+        >
+          <Pressable className='w-full'>
+            <View className='bg-emerald-800 w-full p-6 rounded-2xl border border-emerald-700'>
+              <View className='flex-row items-center justify-between mb-4'>
+                <Text className='text-white text-xl font-bold'>
+                  Custom Color
+                </Text>
+                <TouchableOpacity onPress={handleRandom}>
+                  <MaterialIcons name='casino' size={26} color='#6ee7b7' />
+                </TouchableOpacity>
+              </View>
+              <View
+                style={{ backgroundColor: preview }}
+                className='h-16 rounded-xl mb-5 items-center justify-center'
               >
-                {preview.toUpperCase()}
-              </Text>
+                <Text
+                  style={{ color: isLightColor(preview) ? '#18181b' : 'white' }}
+                  className='font-mono text-sm'
+                >
+                  {preview.toUpperCase()}
+                </Text>
+              </View>
+              <ColorWheel
+                r={r}
+                g={g}
+                b={b}
+                onColorChange={(nr, ng, nb) => {
+                  setR(nr);
+                  setG(ng);
+                  setB(nb);
+                }}
+              />
+              <SliderRow label='R' value={r} onChange={setR} color='#f87171' />
+              <SliderRow label='G' value={g} onChange={setG} color='#4ade80' />
+              <SliderRow label='B' value={b} onChange={setB} color='#60a5fa' />
+              <View className='flex-row justify-end gap-3 mt-4'>
+                <TouchableOpacity
+                  className='bg-rose-600/60 p-3 px-6 rounded-xl'
+                  onPress={onClose}
+                >
+                  <Text className='text-white font-bold'>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className='bg-lime-600 p-3 px-6 rounded-xl'
+                  onPress={() => onSelect(preview)}
+                >
+                  <Text className='text-white font-bold'>Select</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-
-            <SliderRow label='R' value={r} onChange={setR} color='#f87171' />
-            <SliderRow label='G' value={g} onChange={setG} color='#4ade80' />
-            <SliderRow label='B' value={b} onChange={setB} color='#60a5fa' />
-
-            <View className='flex-row justify-end gap-3 mt-4'>
-              <TouchableOpacity
-                className='bg-rose-600/60 p-3 px-6 rounded-xl'
-                onPress={onClose}
-              >
-                <Text className='text-white font-bold'>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className='bg-lime-600 p-3 px-6 rounded-xl'
-                onPress={() => onSelect(preview)}
-              >
-                <Text className='text-white font-bold'>Select</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </GestureHandlerRootView>
     </Modal>
   );
 }
