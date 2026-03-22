@@ -9,6 +9,9 @@ export interface Counter {
     decrementBy: number;
     allowNegative: boolean;
   };
+  styling: {
+    color: string;
+  };
 
   history: HistoryEntry[];
 }
@@ -22,6 +25,8 @@ export const DefaultGroup: Group = {
   id: 'Default',
   name: 'Default',
 };
+
+export const DefaultColor = '#0e7490';
 
 export const HistoryCreation = 1;
 export const HistoryIncrement = 2;

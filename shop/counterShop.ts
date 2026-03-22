@@ -1,5 +1,6 @@
 import {
   Counter,
+  DefaultColor,
   DefaultGroup,
   Group,
   HistoryCreation,
@@ -33,8 +34,9 @@ interface CounterState {
 
   addCounter: (
     label: string,
-    groupId?: string,
-    settings?: Counter['settings'],
+    groupId: string,
+    settings: Counter['settings'],
+    color: string,
   ) => void;
   updateCounter: (id: string, updates: Partial<Counter>) => void;
   increment: (id: string, amount: number) => void;
@@ -54,8 +56,9 @@ export const useCounterShop = create<CounterState>()(
 
       addCounter: (
         label: string,
-        groupId?: string,
-        settings?: Counter['settings'],
+        groupId: string,
+        settings: Counter['settings'],
+        color = DefaultColor,
       ) =>
         set((state) => ({
           counters: [
@@ -71,6 +74,9 @@ export const useCounterShop = create<CounterState>()(
                 incrementBy: 1,
                 decrementBy: 1,
                 allowNegative: false,
+              },
+              styling: {
+                color: color,
               },
             },
           ],

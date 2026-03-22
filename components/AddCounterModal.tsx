@@ -1,4 +1,5 @@
 import { useCounterShop } from '@/shop/counterShop';
+import { DefaultColor } from '@/vibes/definitions';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { useState } from 'react';
 import {
@@ -10,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import ColorPickerBar from './reusable/ColorPickerBar';
 import CounterSettingsFields from './reusable/CounterSettingsFields';
 import VibyInput from './reusable/VibyInput';
 
@@ -26,6 +28,7 @@ export default function AddCounterModal({
   const [defaultValue, setDefaultValue] = useState('0');
   const [incrementBy, setIncrementBy] = useState('1');
   const [decrementBy, setDecrementBy] = useState('1');
+  const [color, setColor] = useState(DefaultColor);
 
   const addCounter = useCounterShop((state) => state.addCounter);
 
@@ -34,12 +37,17 @@ export default function AddCounterModal({
       return;
     }
 
-    addCounter(label, selectedGroupId, {
-      defaultValue: Number(defaultValue) || 0,
-      incrementBy: Number(incrementBy) || 1,
-      decrementBy: Number(decrementBy) || 1,
-      allowNegative: false,
-    });
+    addCounter(
+      label,
+      selectedGroupId,
+      {
+        defaultValue: Number(defaultValue) || 0,
+        incrementBy: Number(incrementBy) || 1,
+        decrementBy: Number(decrementBy) || 1,
+        allowNegative: false,
+      },
+      color,
+    );
 
     handleClose();
   };
@@ -50,6 +58,7 @@ export default function AddCounterModal({
     setIncrementBy('1');
     setDecrementBy('1');
     setModalVisible(false);
+    setColor(DefaultColor);
   };
 
   return (
@@ -86,6 +95,7 @@ export default function AddCounterModal({
                 <Text className='text-white text-2xl font-bold mb-4'>
                   New Counter
                 </Text>
+                <ColorPickerBar selected={color} onSelect={setColor} />
                 <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
                 <VibyInput
                   className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'

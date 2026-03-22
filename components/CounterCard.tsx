@@ -1,4 +1,5 @@
 import { useCounterShop } from '@/shop/counterShop';
+import { DefaultColor } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Haptics from 'expo-haptics';
 import { Pressable, Text, TouchableOpacity, View } from 'react-native';
@@ -6,7 +7,6 @@ import CounterActionsMenu from './CounterActionsMenu';
 
 interface CounterCardProps {
   counterId: string;
-  color?: string;
   onEdit: () => void;
   onActions: (
     id: string,
@@ -32,7 +32,6 @@ function isLightColor(hex: string): boolean {
 
 export default function CounterCard({
   counterId,
-  color = '#0e7490',
   onEdit,
   onActions,
 }: CounterCardProps) {
@@ -44,6 +43,7 @@ export default function CounterCard({
 
   if (!counter) return null;
 
+  const color = counter.styling.color ?? DefaultColor;
   const light = isLightColor(color);
   const textColor = light ? '#18181b' : '#fafafa';
   const btnBg = light ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)';
