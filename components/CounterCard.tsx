@@ -2,11 +2,16 @@ import { useCounterShop } from '@/shop/counterShop';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Haptics from 'expo-haptics';
 import { Pressable, Text, TouchableOpacity, View } from 'react-native';
+import CounterActionsMenu from './CounterActionsMenu';
 
 interface CounterCardProps {
   counterId: string;
   color?: string;
   onEdit: () => void;
+  onActions: (
+    id: string,
+    position: { x: number; y: number; width: number; height: number },
+  ) => void;
 }
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -29,6 +34,7 @@ export default function CounterCard({
   counterId,
   color = '#0e7490',
   onEdit,
+  onActions,
 }: CounterCardProps) {
   const counter = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
@@ -56,9 +62,10 @@ export default function CounterCard({
         >
           {counter.label}
         </Text>
-        <TouchableOpacity hitSlop={8}>
-          <MaterialIcons name='more-vert' size={20} color={textColor} />
-        </TouchableOpacity>
+        <CounterActionsMenu
+          iconColor={textColor}
+          onPress={(pos) => onActions(counterId, pos)}
+        />
       </View>
 
       <View className='flex-row items-center justify-center gap-8 pt-1 pb-3'>

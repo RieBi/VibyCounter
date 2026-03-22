@@ -1,7 +1,9 @@
+import ActionsPopup from '@/components/ActionsPopup';
 import AddCounterModal from '@/components/AddCounterModal';
 import CounterCard from '@/components/CounterCard';
 import EditCounterModal from '@/components/EditCounterModal';
 import GroupDrawer from '@/components/GroupDrawer';
+import MoveToGroupModal from '@/components/MoveToGroupModal';
 import { useCounterShop } from '@/shop/counterShop';
 import { DefaultGroup } from '@/vibes/definitions';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -17,6 +19,14 @@ export default function Index() {
   const [selectedGroupId, setSelectedGroupId] = useState<string>(
     DefaultGroup.id,
   );
+  const [actionsId, setActionsId] = useState<string | null>(null);
+  const [actionsPos, setActionsPos] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
+  const [moveId, setMoveId] = useState<string | null>(null);
 
   const counters = useCounterShop(
     useShallow((state) =>
@@ -61,6 +71,10 @@ export default function Index() {
               key={c}
               counterId={c}
               onEdit={() => setEditingId(c)}
+              onActions={(id, position) => {
+                setActionsId(id);
+                setActionsPos(position);
+              }}
             ></CounterCard>
           ))}
 
@@ -74,6 +88,22 @@ export default function Index() {
         <EditCounterModal
           counterId={editingId}
           onClose={() => setEditingId(null)}
+        />
+
+        <ActionsPopup
+          visible={!!actionsId}
+          position={actionsPos}
+          onMoveTo={() => {
+            setMoveId(actionsId);
+            setActionsId(null);
+          }}
+          onClose={() => setActionsId(null)}
+        />
+
+        <MoveToGroupModal
+          counterId={moveId}
+          visible={!!moveId}
+          onClose={() => setMoveId(null)}
         />
 
         <GroupDrawer
