@@ -1,5 +1,5 @@
 import { useCounterShop } from '@/shop/counterShop';
-import { DefaultColor } from '@/vibes/definitions';
+import { DefaultColor, isLightColor } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Haptics from 'expo-haptics';
 import { Pressable, Text, TouchableOpacity, View } from 'react-native';
@@ -12,22 +12,6 @@ interface CounterCardProps {
     id: string,
     position: { x: number; y: number; width: number; height: number },
   ) => void;
-}
-
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace('#', '');
-  return [
-    parseInt(h.substring(0, 2), 16),
-    parseInt(h.substring(2, 4), 16),
-    parseInt(h.substring(4, 6), 16),
-  ];
-}
-
-function isLightColor(hex: string): boolean {
-  const [r, g, b] = hexToRgb(hex);
-  // Relative luminance
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.55;
 }
 
 export default function CounterCard({

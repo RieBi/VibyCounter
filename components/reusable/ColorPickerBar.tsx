@@ -2,6 +2,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import CustomColorModal from './CustomColorModal';
+import { isLightColor } from '@/vibes/definitions';
 
 const PRESETS = [
   '#0e7490',
@@ -50,13 +51,17 @@ export default function ColorPickerBar({
         onPress={() => setCustomVisible(true)}
         style={!isPreset ? { backgroundColor: selected } : undefined}
         className={`h-8 w-8 rounded-full items-center justify-center ${
-          isPreset ? 'border-2 border-dashed border-emerald-400' : ''
+          isPreset
+            ? 'border-2 border-dashed border-emerald-400'
+            : 'border border-white/30'
         }`}
       >
         <MaterialIcons
           name='colorize'
           size={16}
-          color={isPreset ? '#6ee7b7' : 'white'}
+          color={
+            isPreset ? '#6ee7b7' : isLightColor(selected) ? '#18181b' : 'white'
+          }
         />
       </TouchableOpacity>
 

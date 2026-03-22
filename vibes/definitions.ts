@@ -58,3 +58,26 @@ function isHistoryEntryIncrement(
 export const HistoryUtils = {
   isHistoryEntryIncrement,
 };
+
+export function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '');
+  return [
+    parseInt(h.substring(0, 2), 16),
+    parseInt(h.substring(2, 4), 16),
+    parseInt(h.substring(4, 6), 16),
+  ];
+}
+
+export function isLightColor(hex: string): boolean {
+  const [r, g, b] = hexToRgb(hex);
+  // Relative luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55;
+}
+
+export function rgbToHex(r: number, g: number, b: number): string {
+  return (
+    '#' +
+    [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')
+  );
+}

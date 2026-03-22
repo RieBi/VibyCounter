@@ -1,3 +1,4 @@
+import { hexToRgb, isLightColor, rgbToHex } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Slider from '@react-native-community/slider';
 import { useEffect, useState } from 'react';
@@ -8,22 +9,6 @@ interface CustomColorModalProps {
   currentColor: string;
   onSelect: (color: string) => void;
   onClose: () => void;
-}
-
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace('#', '');
-  return [
-    parseInt(h.substring(0, 2), 16),
-    parseInt(h.substring(2, 4), 16),
-    parseInt(h.substring(4, 6), 16),
-  ];
-}
-
-function rgbToHex(r: number, g: number, b: number): string {
-  return (
-    '#' +
-    [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')
-  );
 }
 
 function randomColor(): string {
@@ -85,7 +70,10 @@ export default function CustomColorModal({
               style={{ backgroundColor: preview }}
               className='h-16 rounded-xl mb-5 items-center justify-center'
             >
-              <Text className='text-white/80 font-mono text-sm'>
+              <Text
+                style={{ color: isLightColor(preview) ? '#18181b' : 'white' }}
+                className='font-mono text-sm'
+              >
                 {preview.toUpperCase()}
               </Text>
             </View>
