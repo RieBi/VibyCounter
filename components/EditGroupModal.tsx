@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import ConfirmModal from './reusable/ConfirmModal';
+import IconPickerModal from './reusable/IconPickerModal';
 import VibyInput from './reusable/VibyInput';
 
 interface EditGroupModalProps {
@@ -25,11 +26,13 @@ export default function EditGroupModal({
 }: EditGroupModalProps) {
   const [name, setName] = useState('');
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
+  const [icon, setIcon] = useState<string | undefined>(undefined);
+  const [iconPickerVisible, setIconPickerVisible] = useState(false);
 
   const group = useCounterShop((state) =>
     state.groups.find((g) => g.id === groupId),
   );
-  const renameGroup = useCounterShop((state) => state.renameGroup);
+  const updateGroup = useCounterShop((state) => state.updateGroup);
   const deleteGroup = useCounterShop((state) => state.deleteGroup);
   const groups = useCounterShop((state) => state.groups);
 
@@ -38,12 +41,13 @@ export default function EditGroupModal({
   useEffect(() => {
     if (group) {
       setName(group.name);
+      setIcon(group.styling.icon);
     }
   }, [group]);
 
   const handleSave = () => {
     if (!groupId || name.trim() === '') return;
-    renameGroup(groupId, name.trim());
+    updateGroup(groupId, { name: name, styling: { icon } });
     onClose();
   };
 
@@ -87,7 +91,39 @@ export default function EditGroupModal({
               )}
             </View>
 
+            <Text className='text-emerald-300 text-sm mb-1 ml-1'>Icon</Text>
+            <TouchableOpacity
+              className='flex-row items-center gap-3 bg-emerald-900 p-4 rounded-xl border border-lime-600 mb-4'
+              onPress={() => setIconPickerVisible(true)}
+            >
+              {icon ? (
+                <MaterialIcons
+                  name={icon as keyof typeof MaterialIcons.glyphMap}
+                  size={24}
+                  color='white'
+                />
+              ) : (
+                <MaterialIcons
+                  name='add-circle-outline'
+                  size={24}
+                  color='#6ee7b7'
+                />
+              )}
+              <Text className={icon ? 'text-white' : 'text-emerald-300'}>
+                {icon ?? 'Choose an icon'}
+              </Text>
+            </TouchableOpacity>
+
+            <IconPickerModal
+              visible={iconPickerVisible}
+              selected={icon}
+              onSelect={setIcon}
+              onClear={() => setIcon(undefined)}
+              onClose={() => setIconPickerVisible(false)}
+            />
+
             <Text className='text-emerald-300 text-sm mb-1 ml-1'>Name</Text>
+
             <VibyInput
               className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
               placeholder='Group name'

@@ -43,8 +43,8 @@ interface CounterState {
   resetCounter: (id: string) => void;
   deleteCounter: (id: string) => void;
   deleteAll: () => void;
-  addGroup: (name: string) => void;
-  renameGroup: (id: string, newName: string) => void;
+  addGroup: (name: string, icon?: string) => void;
+  updateGroup: (id: string, updates: Partial<Group>) => void;
   deleteGroup: (id: string) => void;
 }
 
@@ -59,6 +59,7 @@ export const useCounterShop = create<CounterState>()(
         groupId: string,
         settings: Counter['settings'],
         color = DefaultColor,
+        icon?: string,
       ) =>
         set((state) => ({
           counters: [
@@ -77,6 +78,7 @@ export const useCounterShop = create<CounterState>()(
               },
               styling: {
                 color: color,
+                icon: icon,
               },
             },
           ],
@@ -138,14 +140,14 @@ export const useCounterShop = create<CounterState>()(
         set(() => ({
           counters: [],
         })),
-      addGroup: (name) =>
+      addGroup: (name, icon) =>
         set((state) => ({
-          groups: [...state.groups, { id: uuid(), name }],
+          groups: [...state.groups, { id: uuid(), name, styling: { icon } }],
         })),
-      renameGroup: (id, newName) =>
+      updateGroup: (id, updates) =>
         set((state) => ({
           groups: state.groups.map((group) =>
-            group.id === id ? { ...group, name: newName } : group,
+            group.id === id ? { ...group, ...updates } : group,
           ),
         })),
       deleteGroup: (id) =>

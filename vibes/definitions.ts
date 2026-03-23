@@ -11,6 +11,7 @@ export interface Counter {
   };
   styling: {
     color: string;
+    icon?: string;
   };
 
   history: HistoryEntry[];
@@ -19,11 +20,17 @@ export interface Counter {
 export interface Group {
   id: string;
   name: string;
+  styling: {
+    icon?: string;
+  }
 }
 
 export const DefaultGroup: Group = {
   id: 'Default',
   name: 'Default',
+  styling: {
+    icon: undefined,
+  }
 };
 
 export const DefaultColor = '#0e7490';

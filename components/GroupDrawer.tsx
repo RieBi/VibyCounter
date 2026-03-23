@@ -163,12 +163,21 @@ export default function GroupDrawer({
             {groups.map((group) => (
               <TouchableOpacity
                 key={group.id}
-                className={`flex-row items-center px-4 py-3 ${
+                className={`flex-row items-center px-4 py-3 gap-3 ${
                   group.id === selectedGroupId ? 'bg-zinc-100' : ''
                 }`}
                 onPress={() => handleSelect(group.id)}
                 onLongPress={() => setEditingGroupId(group.id)}
               >
+                {group.styling?.icon && (
+                  <MaterialIcons
+                    name={
+                      group.styling.icon as keyof typeof MaterialIcons.glyphMap
+                    }
+                    size={20}
+                    color='#3f3f46'
+                  />
+                )}
                 <Text
                   className='text-zinc-800 text-lg flex-1 mr-2'
                   numberOfLines={1}
