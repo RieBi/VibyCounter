@@ -1,8 +1,8 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useMemo, useState } from 'react';
+import { FlashList } from '@shopify/flash-list';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import {
   Dimensions,
-  FlatList,
   Modal,
   Pressable,
   Text,
@@ -51,9 +51,50 @@ const ALL_ICONS = Object.keys(
   MaterialIcons.glyphMap,
 ).sort() as (keyof typeof MaterialIcons.glyphMap)[];
 
-const COLUMNS = 5;
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const ITEM_SIZE = (SCREEN_WIDTH - 32 - (COLUMNS - 1) * 8) / COLUMNS;
+const SUGGESTED_COLUMNS = 5;
+const ALL_COLUMNS = 10;
+const ALL_ITEM_SIZE = (SCREEN_WIDTH - 32 - (ALL_COLUMNS - 1) * 6) / ALL_COLUMNS;
+
+const IconItem = memo(function IconItem({
+  name,
+  isSelected,
+  size,
+  itemSize,
+  onPress,
+}: {
+  name: string;
+  isSelected: boolean;
+  size: 'suggested' | 'all';
+  itemSize: number;
+  onPress: (name: string) => void;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={() => onPress(name)}
+      style={{ width: itemSize, height: itemSize, margin: 3 }}
+      className={`items-center justify-center rounded-xl ${
+        isSelected ? 'bg-emerald-600' : 'bg-zinc-100'
+      }`}
+    >
+      <MaterialIcons
+        name={name as keyof typeof MaterialIcons.glyphMap}
+        size={size === 'suggested' ? 26 : 20}
+        color={isSelected ? 'white' : '#3f3f46'}
+      />
+      {size === 'suggested' && (
+        <Text
+          className={`text-[9px] mt-0.5 ${
+            isSelected ? 'text-white' : 'text-zinc-400'
+          }`}
+          numberOfLines={1}
+        >
+          {name}
+        </Text>
+      )}
+    </TouchableOpacity>
+  );
+});
 
 export default function IconPickerModal({
   visible,
@@ -63,54 +104,56 @@ export default function IconPickerModal({
   onClose,
 }: IconPickerModalProps) {
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
   const insets = useSafeAreaInsets();
 
-  const filtered = useMemo(() => {
-    if (search.trim() === '') return [];
-    const q = search.toLowerCase().replace(/\s+/g, '-');
-    return ALL_ICONS.filter((name) => name.includes(q));
-  }, [search]);
+  const debounceRef = useRef<number>(0);
 
-  const showSuggested = search.trim() === '';
-
-  const handleSelect = (icon: string) => {
-    onSelect(icon);
-    setSearch('');
-    onClose();
+  const handleSearch = (text: string) => {
+    setSearch(text);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(
+      () => setDebouncedSearch(text),
+      250,
+    ) as unknown as number;
   };
+
+  const filtered = useMemo(() => {
+    if (debouncedSearch.trim() === '') return [];
+    const q = debouncedSearch.toLowerCase().replace(/\s+/g, '-');
+    return ALL_ICONS.filter((name) => name.includes(q));
+  }, [debouncedSearch]);
+
+  const showSuggested = debouncedSearch.trim() === '';
+
+  const handleSelect = useCallback(
+    (icon: string) => {
+      onSelect(icon);
+      setSearch('');
+      setDebouncedSearch('');
+      onClose();
+    },
+    [onSelect, onClose],
+  );
 
   const handleClose = () => {
     setSearch('');
     onClose();
   };
 
-  const renderIcon = (name: string) => {
-    const isSelected = name === selected;
-    return (
-      <TouchableOpacity
-        key={name}
-        onPress={() => handleSelect(name)}
-        style={{ width: ITEM_SIZE, height: ITEM_SIZE }}
-        className={`items-center justify-center rounded-xl ${
-          isSelected ? 'bg-emerald-600' : 'bg-zinc-100'
-        }`}
-      >
-        <MaterialIcons
-          name={name as keyof typeof MaterialIcons.glyphMap}
-          size={26}
-          color={isSelected ? 'white' : '#3f3f46'}
-        />
-        <Text
-          className={`text-[9px] mt-0.5 ${
-            isSelected ? 'text-white' : 'text-zinc-400'
-          }`}
-          numberOfLines={1}
-        >
-          {name}
-        </Text>
-      </TouchableOpacity>
-    );
-  };
+  const renderAllItem = useCallback(
+    ({ item }: { item: string }) => (
+      <IconItem
+        name={item}
+        isSelected={item === selected}
+        size='all'
+        itemSize={ALL_ITEM_SIZE}
+        onPress={handleSelect}
+      />
+    ),
+    [selected, handleSelect],
+  );
 
   return (
     <Modal
@@ -156,47 +199,54 @@ export default function IconPickerModal({
               placeholder='Search icons...'
               placeholderTextColor='#a1a1aa'
               value={search}
-              onChangeText={setSearch}
+              onChangeText={handleSearch}
+              selectTextOnFocus={false}
             />
           </View>
 
           {/* Icon grid */}
-          {showSuggested ? (
-            <FlatList
-              data={SUGGESTED}
-              keyExtractor={(item) => item}
-              numColumns={COLUMNS}
-              contentContainerStyle={{ paddingHorizontal: 16 }}
-              columnWrapperStyle={{ gap: 8, marginBottom: 8 }}
-              keyboardShouldPersistTaps='handled'
-              ListHeaderComponent={
-                <Text className='text-zinc-500 text-sm font-semibold mb-2'>
-                  Suggested
-                </Text>
-              }
-              ListFooterComponent={
-                <Text className='text-zinc-400 text-xs text-center mt-4 mb-2'>
-                  Search to browse all {ALL_ICONS.length} icons
-                </Text>
-              }
-              renderItem={({ item }) => renderIcon(item)}
-            />
-          ) : (
-            <FlatList
-              data={filtered}
-              keyExtractor={(item) => item}
-              numColumns={COLUMNS}
-              contentContainerStyle={{ paddingHorizontal: 16 }}
-              columnWrapperStyle={{ gap: 8, marginBottom: 8 }}
-              keyboardShouldPersistTaps='handled'
-              ListEmptyComponent={
+          <FlashList
+            data={showSuggested ? ALL_ICONS : filtered}
+            keyExtractor={(item) => item}
+            numColumns={ALL_COLUMNS}
+            renderItem={renderAllItem}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+            keyboardShouldPersistTaps='handled'
+            ListHeaderComponent={
+              showSuggested ? (
+                <View>
+                  <Text className='text-zinc-500 text-sm font-semibold mb-2'>
+                    Suggested
+                  </Text>
+                  <View className='flex-row flex-wrap gap-2 mb-4'>
+                    {SUGGESTED.map((name) => (
+                      <IconItem
+                        key={name}
+                        name={name}
+                        isSelected={name === selected}
+                        size='suggested'
+                        itemSize={
+                          (SCREEN_WIDTH - 64 - (SUGGESTED_COLUMNS - 1) * 8) /
+                          SUGGESTED_COLUMNS
+                        }
+                        onPress={handleSelect}
+                      />
+                    ))}
+                  </View>
+                  <Text className='text-zinc-500 text-sm font-semibold mb-2'>
+                    All Icons
+                  </Text>
+                </View>
+              ) : null
+            }
+            ListEmptyComponent={
+              !showSuggested ? (
                 <Text className='text-zinc-400 text-center py-8'>
                   No icons matching &quot;{search}&quot;
                 </Text>
-              }
-              renderItem={({ item }) => renderIcon(item)}
-            />
-          )}
+              ) : null
+            }
+          />
         </View>
       </View>
     </Modal>
