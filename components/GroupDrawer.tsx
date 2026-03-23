@@ -18,6 +18,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ConfirmModal from './reusable/ConfirmModal';
 import VibyInput from './reusable/VibyInput';
 
 interface GroupDrawerProps {
@@ -43,6 +44,11 @@ export default function GroupDrawer({
 
   const [newGroupName, setNewGroupName] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [confirmDeleteGroupId, setConfirmDeleteGroupId] = useState<
+    string | null
+  >(null);
+
+  const groupToDelete = groups.find((g) => g.id === confirmDeleteGroupId);
 
   const translateX = useSharedValue(-DRAWER_WIDTH);
   const backdropOpacity = useSharedValue(0);
@@ -129,10 +135,16 @@ export default function GroupDrawer({
   };
 
   const handleDelete = (id: string) => {
-    deleteGroup(id);
-    if (id === selectedGroupId) {
+    setConfirmDeleteGroupId(id);
+  };
+
+  const confirmDelete = () => {
+    if (!confirmDeleteGroupId) return;
+    deleteGroup(confirmDeleteGroupId);
+    if (confirmDeleteGroupId === selectedGroupId) {
       handleSelect(groups[0].id);
     }
+    setConfirmDeleteGroupId(null);
   };
 
   const handleClose = () => {
@@ -213,6 +225,13 @@ export default function GroupDrawer({
               <MaterialIcons name='add' size={22} color='white' />
             </TouchableOpacity>
           </Animated.View>
+          <ConfirmModal
+            visible={!!confirmDeleteGroupId}
+            title='Delete Group'
+            message={`Are you sure you want to delete "${groupToDelete?.name}"? Counters in this group will be moved to default group.`}
+            onConfirm={confirmDelete}
+            onCancel={() => setConfirmDeleteGroupId(null)}
+          />
         </Animated.View>
       </GestureDetector>
     </Pressable>
