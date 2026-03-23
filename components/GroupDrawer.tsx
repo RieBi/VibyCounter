@@ -174,7 +174,9 @@ export default function GroupDrawer({
                 }`}
                 onPress={() => handleSelect(group.id)}
               >
-                <Text className='text-zinc-800 text-lg'>{group.name}</Text>
+                <Text className='text-zinc-800 text-lg flex-1 mr-2'>
+                  {group.name}
+                </Text>
                 {group.id !== groups[0]?.id && (
                   <TouchableOpacity
                     onPress={() => handleDelete(group.id)}
