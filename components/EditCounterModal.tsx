@@ -34,7 +34,6 @@ export default function EditCounterModal({
   const [historyVisible, setHistoryVisible] = useState(false);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const [confirmResetVisible, setConfirmResetVisible] = useState(false);
-  const [customColorOpen, setCustomColorOpen] = useState(false);
 
   const [label, setLabel] = useState('');
   const [currentValue, setCurrentValue] = useState('0');
@@ -44,6 +43,7 @@ export default function EditCounterModal({
   const [color, setColor] = useState(DefaultColor);
   const [icon, setIcon] = useState<string | undefined>(undefined);
   const [iconPickerVisible, setIconPickerVisible] = useState(false);
+  const [subModalOpen, setSubModalOpen] = useState(false);
 
   const counterToEdit = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
@@ -102,6 +102,17 @@ export default function EditCounterModal({
     setConfirmResetVisible(false);
   };
 
+  const openIconPicker = () => {
+    setSubModalOpen(true);
+    setIconPickerVisible(true);
+  };
+
+  const closeIconPicker = () => {
+    Keyboard.dismiss();
+    setIconPickerVisible(false);
+    setTimeout(() => setSubModalOpen(false), 300);
+  };
+
   if (!counterId) {
     return null;
   }
@@ -116,7 +127,7 @@ export default function EditCounterModal({
       <KeyboardAwareScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps='handled'
-        enabled={!customColorOpen}
+        enabled={!subModalOpen}
       >
         <Pressable
           className='flex-1 justify-center items-center bg-black/60 px-4'
@@ -151,13 +162,16 @@ export default function EditCounterModal({
               <ColorPickerBar
                 selected={color}
                 onSelect={setColor}
-                onCustomModalChange={setCustomColorOpen}
+                onCustomModalChange={(open) => {
+                  if (open) setSubModalOpen(true);
+                  else setTimeout(() => setSubModalOpen(false), 300);
+                }}
               />
 
               <Text className='text-emerald-300 text-sm mb-1 ml-1'>Icon</Text>
               <TouchableOpacity
                 className='flex-row items-center gap-3 bg-emerald-900 p-4 rounded-xl border border-lime-600 mb-4'
-                onPress={() => setIconPickerVisible(true)}
+                onPress={openIconPicker}
               >
                 {icon ? (
                   <MaterialIcons
@@ -180,9 +194,15 @@ export default function EditCounterModal({
               <IconPickerModal
                 visible={iconPickerVisible}
                 selected={icon}
-                onSelect={setIcon}
-                onClear={() => setIcon(undefined)}
-                onClose={() => setIconPickerVisible(false)}
+                onSelect={(i) => {
+                  setIcon(i);
+                  closeIconPicker();
+                }}
+                onClear={() => {
+                  setIcon(undefined);
+                  closeIconPicker();
+                }}
+                onClose={closeIconPicker}
               />
 
               <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
