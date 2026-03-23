@@ -18,7 +18,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import ConfirmModal from './reusable/ConfirmModal';
+import EditGroupModal from './EditGroupModal';
 import VibyInput from './reusable/VibyInput';
 
 interface GroupDrawerProps {
@@ -40,15 +40,10 @@ export default function GroupDrawer({
 }: GroupDrawerProps) {
   const groups = useCounterShop((state) => state.groups);
   const addGroup = useCounterShop((state) => state.addGroup);
-  const deleteGroup = useCounterShop((state) => state.deleteGroup);
 
   const [newGroupName, setNewGroupName] = useState('');
   const [mounted, setMounted] = useState(false);
-  const [confirmDeleteGroupId, setConfirmDeleteGroupId] = useState<
-    string | null
-  >(null);
-
-  const groupToDelete = groups.find((g) => g.id === confirmDeleteGroupId);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
 
   const translateX = useSharedValue(-DRAWER_WIDTH);
   const backdropOpacity = useSharedValue(0);
@@ -134,19 +129,6 @@ export default function GroupDrawer({
     onClose();
   };
 
-  const handleDelete = (id: string) => {
-    setConfirmDeleteGroupId(id);
-  };
-
-  const confirmDelete = () => {
-    if (!confirmDeleteGroupId) return;
-    deleteGroup(confirmDeleteGroupId);
-    if (confirmDeleteGroupId === selectedGroupId) {
-      handleSelect(groups[0].id);
-    }
-    setConfirmDeleteGroupId(null);
-  };
-
   const handleClose = () => {
     Keyboard.dismiss();
     onClose();
@@ -181,26 +163,18 @@ export default function GroupDrawer({
             {groups.map((group) => (
               <TouchableOpacity
                 key={group.id}
-                className={`flex-row items-center justify-between px-4 py-3 ${
+                className={`flex-row items-center px-4 py-3 ${
                   group.id === selectedGroupId ? 'bg-zinc-100' : ''
                 }`}
                 onPress={() => handleSelect(group.id)}
+                onLongPress={() => setEditingGroupId(group.id)}
               >
-                <Text className='text-zinc-800 text-lg flex-1 mr-2'>
+                <Text
+                  className='text-zinc-800 text-lg flex-1 mr-2'
+                  numberOfLines={1}
+                >
                   {group.name}
                 </Text>
-                {group.id !== groups[0]?.id && (
-                  <TouchableOpacity
-                    onPress={() => handleDelete(group.id)}
-                    hitSlop={8}
-                  >
-                    <MaterialIcons
-                      name='delete-outline'
-                      size={20}
-                      color='#ef4444'
-                    />
-                  </TouchableOpacity>
-                )}
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -225,12 +199,14 @@ export default function GroupDrawer({
               <MaterialIcons name='add' size={22} color='white' />
             </TouchableOpacity>
           </Animated.View>
-          <ConfirmModal
-            visible={!!confirmDeleteGroupId}
-            title='Delete Group'
-            message={`Are you sure you want to delete "${groupToDelete?.name}"? Counters in this group will be moved to default group.`}
-            onConfirm={confirmDelete}
-            onCancel={() => setConfirmDeleteGroupId(null)}
+          <EditGroupModal
+            groupId={editingGroupId}
+            onClose={() => setEditingGroupId(null)}
+            onDeleted={(id) => {
+              if (id === selectedGroupId) {
+                onSelectGroup(groups[0].id);
+              }
+            }}
           />
         </Animated.View>
       </GestureDetector>
