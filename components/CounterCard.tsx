@@ -39,13 +39,22 @@ export default function CounterCard({
       className='mx-3 my-1.5 px-4 py-3 rounded-2xl'
     >
       <View className='flex-row items-center justify-between'>
-        <Text
-          style={{ color: textColor }}
-          className='text-sm font-semibold flex-1'
-          numberOfLines={1}
-        >
-          {counter.label}
-        </Text>
+        <View className='flex-row items-center flex-1 gap-2'>
+          {counter.styling.icon && (
+            <MaterialIcons
+              name={counter.styling.icon as keyof typeof MaterialIcons.glyphMap}
+              size={16}
+              color={textColor}
+            />
+          )}
+          <Text
+            style={{ color: textColor }}
+            className='text-sm font-semibold flex-1'
+            numberOfLines={1}
+          >
+            {counter.label}
+          </Text>
+        </View>
         <CounterActionsMenu
           iconColor={textColor}
           onPress={(pos) => onActions(counterId, pos)}

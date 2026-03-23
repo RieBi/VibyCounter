@@ -15,6 +15,7 @@ import CounterHistoryModal from './CounterHistoryModal';
 import ColorPickerBar from './reusable/ColorPickerBar';
 import ConfirmModal from './reusable/ConfirmModal';
 import CounterSettingsFields from './reusable/CounterSettingsFields';
+import IconPickerModal from './reusable/IconPickerModal';
 import VibyInput from './reusable/VibyInput';
 
 interface EditCounterModalProps {
@@ -41,6 +42,8 @@ export default function EditCounterModal({
   const [incrementBy, setIncrementBy] = useState('1');
   const [decrementBy, setDecrementBy] = useState('1');
   const [color, setColor] = useState(DefaultColor);
+  const [icon, setIcon] = useState<string | undefined>(undefined);
+  const [iconPickerVisible, setIconPickerVisible] = useState(false);
 
   const counterToEdit = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
@@ -54,6 +57,7 @@ export default function EditCounterModal({
       setIncrementBy(String(counterToEdit.settings.incrementBy ?? 1));
       setDecrementBy(String(counterToEdit.settings.decrementBy ?? 1));
       setColor(counterToEdit.styling.color ?? DefaultColor);
+      setIcon(counterToEdit.styling.icon);
     }
   }, [counterToEdit]);
 
@@ -73,6 +77,7 @@ export default function EditCounterModal({
       },
       styling: {
         color: color,
+        icon,
       },
     });
     onClose();
@@ -148,6 +153,38 @@ export default function EditCounterModal({
                 onSelect={setColor}
                 onCustomModalChange={setCustomColorOpen}
               />
+
+              <Text className='text-emerald-300 text-sm mb-1 ml-1'>Icon</Text>
+              <TouchableOpacity
+                className='flex-row items-center gap-3 bg-emerald-900 p-4 rounded-xl border border-lime-600 mb-4'
+                onPress={() => setIconPickerVisible(true)}
+              >
+                {icon ? (
+                  <MaterialIcons
+                    name={icon as keyof typeof MaterialIcons.glyphMap}
+                    size={24}
+                    color='white'
+                  />
+                ) : (
+                  <MaterialIcons
+                    name='add-circle-outline'
+                    size={24}
+                    color='#6ee7b7'
+                  />
+                )}
+                <Text className={icon ? 'text-white' : 'text-emerald-300'}>
+                  {icon ?? 'Choose an icon'}
+                </Text>
+              </TouchableOpacity>
+
+              <IconPickerModal
+                visible={iconPickerVisible}
+                selected={icon}
+                onSelect={setIcon}
+                onClear={() => setIcon(undefined)}
+                onClose={() => setIconPickerVisible(false)}
+              />
+
               <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
               <VibyInput
                 className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
