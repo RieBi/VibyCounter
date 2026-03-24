@@ -19,6 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EditGroupModal from './EditGroupModal';
+import ValidationToast from './reusable/ValidationToast';
 import VibyInput from './reusable/VibyInput';
 
 interface GroupDrawerProps {
@@ -44,6 +45,9 @@ export default function GroupDrawer({
   const [newGroupName, setNewGroupName] = useState('');
   const [mounted, setMounted] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [validationMessage, setValidationMessage] = useState<string | null>(
+    null,
+  );
 
   const translateX = useSharedValue(-DRAWER_WIDTH);
   const backdropOpacity = useSharedValue(0);
@@ -119,7 +123,12 @@ export default function GroupDrawer({
 
   const handleAddGroup = () => {
     const name = newGroupName.trim();
-    if (name === '') return;
+
+    if (name === '') {
+      setValidationMessage('Group name is required');
+      return;
+    }
+
     addGroup(name);
     setNewGroupName('');
   };
@@ -131,6 +140,7 @@ export default function GroupDrawer({
 
   const handleClose = () => {
     Keyboard.dismiss();
+    setValidationMessage(null);
     onClose();
   };
 
@@ -219,6 +229,11 @@ export default function GroupDrawer({
           />
         </Animated.View>
       </GestureDetector>
+      <ValidationToast
+        message={validationMessage}
+        onDismiss={() => setValidationMessage(null)}
+        noInsets
+      />
     </Pressable>
   );
 }

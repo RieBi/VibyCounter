@@ -14,12 +14,14 @@ interface ValidationToastProps {
   message: string | null;
   onDismiss: () => void;
   duration?: number;
+  noInsets?: boolean;
 }
 
 export default function ValidationToast({
   message,
   onDismiss,
   duration = 2500,
+  noInsets = false,
 }: ValidationToastProps) {
   const insets = useSafeAreaInsets();
   const opacity = useSharedValue(0);
@@ -52,7 +54,7 @@ export default function ValidationToast({
     <View
       pointerEvents='none'
       className='absolute left-0 right-0 items-center z-50'
-      style={{ top: insets.top + 16 }}
+      style={{ top: noInsets ? 0 : insets.top + 16 }}
     >
       <Animated.View
         style={style}
