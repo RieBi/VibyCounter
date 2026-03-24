@@ -15,6 +15,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import ColorPickerBar from './reusable/ColorPickerBar';
 import CounterSettingsFields from './reusable/CounterSettingsFields';
 import IconPickerModal from './reusable/IconPickerModal';
+import ValidationToast from './reusable/ValidationToast';
 import VibyInput from './reusable/VibyInput';
 
 interface AddCounterModalProps {
@@ -34,11 +35,15 @@ export default function AddCounterModal({
   const [icon, setIcon] = useState<string | undefined>(undefined);
   const [iconPickerVisible, setIconPickerVisible] = useState(false);
   const [subModalOpen, setSubModalOpen] = useState(false);
+  const [validationMessage, setValidationMessage] = useState<string | null>(
+    null,
+  );
 
   const addCounter = useCounterShop((state) => state.addCounter);
 
   const handleSave = () => {
     if (label.trim() === '') {
+      setValidationMessage('Counter name is required');
       return;
     }
 
@@ -197,6 +202,10 @@ export default function AddCounterModal({
             </Pressable>
           </Pressable>
         </KeyboardAwareScrollView>
+        <ValidationToast
+          message={validationMessage}
+          onDismiss={() => setValidationMessage(null)}
+        />
       </Modal>
     </View>
   );

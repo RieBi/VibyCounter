@@ -67,6 +67,7 @@ function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
 }
 
 function generateWheelBmp(size: number): string {
+  console.log('Generating');
   const center = size / 2;
   const rowSize = Math.ceil((size * 3) / 4) * 4;
   const dataSize = rowSize * size;
