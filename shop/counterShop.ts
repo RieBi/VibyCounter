@@ -42,6 +42,7 @@ interface CounterState {
   increment: (id: string, amount: number) => void;
   resetCounter: (id: string) => void;
   deleteCounter: (id: string) => void;
+  clearHistory: (id: string) => void;
   deleteAll: () => void;
   addGroup: (name: string, icon?: string) => void;
   updateGroup: (id: string, updates: Partial<Group>) => void;
@@ -215,6 +216,18 @@ export const useCounterShop = create<CounterState>()(
       deleteCounter: (id) =>
         set((state) => ({
           counters: state.counters.filter((c) => c.id !== id),
+        })),
+
+      clearHistory: (id) =>
+        set((state) => ({
+          counters: state.counters.map((c) =>
+            c.id === id
+              ? {
+                  ...c,
+                  history: [{ type: HistoryCreation, timestamp: Date.now() }],
+                }
+              : c,
+          ),
         })),
 
       deleteAll: () =>

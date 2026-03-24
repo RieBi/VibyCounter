@@ -1,3 +1,4 @@
+import { useCounterShop } from '@/shop/counterShop';
 import {
   Counter,
   HistoryCreation,
@@ -21,6 +22,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ConfirmModal from './reusable/ConfirmModal';
 
 interface CounterHistoryModalProps {
   counter: Counter | undefined;
@@ -98,6 +100,9 @@ export default function CounterHistoryModal({
   onClose,
 }: CounterHistoryModalProps) {
   const [mounted, setMounted] = useState(false);
+  const [confirmClearVisible, setConfirmClearVisible] = useState(false);
+
+  const clearHistory = useCounterShop((state) => state.clearHistory);
   const insets = useSafeAreaInsets();
 
   const backdropOpacity = useSharedValue(0);
@@ -144,12 +149,22 @@ export default function CounterHistoryModal({
         className='absolute bottom-0 left-0 right-0 h-3/4 bg-emerald-800 rounded-t-2xl border-t border-emerald-700'
       >
         <View className='flex-row justify-between items-center p-4 border-b border-emerald-700'>
-          <Text className='text-white text-xl font-bold'>
+          <Text
+            className='text-white text-xl font-bold flex-1 mr-2'
+            numberOfLines={1}
+          >
             History — {counter?.label}
           </Text>
-          <TouchableOpacity onPress={onClose}>
-            <MaterialIcons name='close' size={26} color='#EBF4FA' />
-          </TouchableOpacity>
+          <View className='flex-row items-center gap-4'>
+            {history.length > 1 && (
+              <TouchableOpacity onPress={() => setConfirmClearVisible(true)}>
+                <MaterialIcons name='delete-sweep' size={24} color='#f87171' />
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={onClose}>
+              <MaterialIcons name='close' size={26} color='#EBF4FA' />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <FlatList
@@ -167,6 +182,18 @@ export default function CounterHistoryModal({
           }
         />
       </Animated.View>
+
+      <ConfirmModal
+        visible={confirmClearVisible}
+        title='Clear History'
+        message={`Are you sure you want to clear all history for "${counter?.label}"?`}
+        confirmLabel='Clear'
+        onConfirm={() => {
+          if (counter) clearHistory(counter.id);
+          setConfirmClearVisible(false);
+        }}
+        onCancel={() => setConfirmClearVisible(false)}
+      />
     </View>
   );
 }
