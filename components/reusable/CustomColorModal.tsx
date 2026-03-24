@@ -110,6 +110,7 @@ export default function CustomColorModal({
                     className='text-center font-mono text-sm p-0 bg-transparent'
                     style={{
                       color: isLightColor(preview) ? '#18181b' : 'white',
+                      minWidth: 80,
                     }}
                     value={hexInput}
                     onChangeText={(t) => setHexInput(t.toUpperCase())}
