@@ -4,7 +4,7 @@ import {
   HistoryEntry,
   HistoryIncrement,
   HistoryReset,
-  HistoryUtils,
+  HistorySettingsChange
 } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { FlatList, Modal, Text, TouchableOpacity, View } from 'react-native';
@@ -20,12 +20,14 @@ const actionLabel: Record<number, string> = {
   [HistoryCreation]: 'Created',
   [HistoryIncrement]: 'Increment',
   [HistoryReset]: 'Reset',
+  [HistorySettingsChange]: 'Settings changed',
 };
 
 const actionIcon: Record<number, keyof typeof MaterialIcons.glyphMap> = {
   [HistoryCreation]: 'add-circle-outline',
   [HistoryIncrement]: 'trending-up',
   [HistoryReset]: 'restart-alt',
+  [HistorySettingsChange]: 'tune',
 };
 
 function formatTimestamp(ts: number): string {
@@ -40,26 +42,36 @@ function formatTimestamp(ts: number): string {
 }
 
 function HistoryItem({ entry }: { entry: HistoryEntry }) {
+  const isIncrement = entry.type === HistoryIncrement && entry.details;
+  const isSettings = entry.type === HistorySettingsChange && entry.changes;
+
   return (
-    <View className='flex-row items-center py-3 px-2 border-b border-emerald-700/50'>
+    <View className='flex-row items-start py-3 px-2 border-b border-emerald-700/50'>
       <MaterialIcons
         name={actionIcon[entry.type] ?? 'circle'}
         size={22}
         color='#86efac'
+        style={{ marginTop: 2 }}
       />
       <View className='ml-3 flex-1'>
         <Text className='text-white font-semibold'>
           {actionLabel[entry.type] ?? 'Unknown'}
         </Text>
-        {HistoryUtils.isHistoryEntryIncrement(entry) && (
+        {isIncrement && (
           <Text className='text-emerald-300 text-sm'>
-            {entry.details.valueBefore} → {entry.details.valueAfter} (
-            {entry.details.incrementBy > 0 ? '+' : ''}
-            {entry.details.incrementBy})
+            {entry.details!.valueBefore} → {entry.details!.valueAfter} (
+            {entry.details!.incrementBy > 0 ? '+' : ''}
+            {entry.details!.incrementBy})
           </Text>
         )}
+        {isSettings &&
+          entry.changes!.map((c, i) => (
+            <Text key={i} className='text-emerald-300 text-sm'>
+              {c.field}: {c.from} → {c.to}
+            </Text>
+          ))}
       </View>
-      <Text className='text-emerald-400 text-xs'>
+      <Text className='text-emerald-400 text-xs' style={{ marginTop: 2 }}>
         {formatTimestamp(entry.timestamp)}
       </Text>
     </View>

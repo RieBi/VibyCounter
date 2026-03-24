@@ -4,7 +4,8 @@ import {
   Group,
   HistoryCreation,
   HistoryIncrement,
-  HistoryReset
+  HistoryReset,
+  HistorySettingsChange,
 } from '@/vibes/definitions';
 import 'react-native-get-random-values';
 import { createMMKV } from 'react-native-mmkv';
@@ -81,9 +82,94 @@ export const useCounterShop = create<CounterState>()(
 
       updateCounter: (id, updates) =>
         set((state) => ({
-          counters: state.counters.map((counter) =>
-            counter.id === id ? { ...counter, ...updates } : counter,
-          ),
+          counters: state.counters.map((counter) => {
+            if (counter.id !== id) return counter;
+
+            const changes: { field: string; from: string; to: string }[] = [];
+
+            if (updates.styling) {
+              const s = counter.styling;
+              const u = updates.styling;
+              if (u.color !== undefined && u.color !== s.color)
+                changes.push({ field: 'Color', from: s.color, to: u.color });
+              if ((u.icon ?? '') !== (s.icon ?? ''))
+                changes.push({
+                  field: 'Icon',
+                  from: s.icon ?? 'none',
+                  to: u.icon ?? 'none',
+                });
+            }
+
+            if (updates.label !== undefined && updates.label !== counter.label)
+              changes.push({
+                field: 'Name',
+                from: counter.label,
+                to: updates.label,
+              });
+
+            if (updates.count !== undefined && updates.count !== counter.count)
+              changes.push({
+                field: 'Value',
+                from: String(counter.count),
+                to: String(updates.count),
+              });
+
+            if (updates.settings) {
+              const s = counter.settings;
+              const u = updates.settings;
+              if (
+                u.defaultValue !== undefined &&
+                u.defaultValue !== s.defaultValue
+              )
+                changes.push({
+                  field: 'Default value',
+                  from: String(s.defaultValue),
+                  to: String(u.defaultValue),
+                });
+              if (
+                u.incrementBy !== undefined &&
+                u.incrementBy !== s.incrementBy
+              )
+                changes.push({
+                  field: 'Increment by',
+                  from: String(s.incrementBy),
+                  to: String(u.incrementBy),
+                });
+              if (
+                u.decrementBy !== undefined &&
+                u.decrementBy !== s.decrementBy
+              )
+                changes.push({
+                  field: 'Decrement by',
+                  from: String(s.decrementBy),
+                  to: String(u.decrementBy),
+                });
+            }
+
+            const updated = {
+              ...counter,
+              ...updates,
+              settings: updates.settings
+                ? { ...counter.settings, ...updates.settings }
+                : counter.settings,
+              styling: updates.styling
+                ? { ...counter.styling, ...updates.styling }
+                : counter.styling,
+            };
+
+            if (changes.length > 0) {
+              updated.history = [
+                ...counter.history,
+                {
+                  type: HistorySettingsChange,
+                  timestamp: Date.now(),
+                  changes,
+                },
+              ];
+            }
+
+            return updated;
+          }),
         })),
 
       increment: (id, amount) =>

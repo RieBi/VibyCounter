@@ -22,7 +22,7 @@ export interface Group {
   name: string;
   styling: {
     icon?: string;
-  }
+  };
 }
 
 export const DefaultGroup: Group = {
@@ -30,7 +30,7 @@ export const DefaultGroup: Group = {
   name: 'Default',
   styling: {
     icon: undefined,
-  }
+  },
 };
 
 export const DefaultColor = '#0e7490';
@@ -38,11 +38,19 @@ export const DefaultColor = '#0e7490';
 export const HistoryCreation = 1;
 export const HistoryIncrement = 2;
 export const HistoryReset = 3;
+export const HistorySettingsChange = 4;
 
 export type HistoryAction =
   | typeof HistoryCreation
   | typeof HistoryIncrement
-  | typeof HistoryReset;
+  | typeof HistoryReset
+  | typeof HistorySettingsChange;
+
+export interface HistoryEntryChange {
+  field: string;
+  from: string;
+  to: string;
+}
 
 export interface HistoryEntryIncrement {
   incrementBy: number;
@@ -54,6 +62,7 @@ export interface HistoryEntry {
   type: HistoryAction;
   timestamp: number;
   details?: HistoryEntryIncrement;
+  changes?: HistoryEntryChange[];
 }
 
 function isHistoryEntryIncrement(
