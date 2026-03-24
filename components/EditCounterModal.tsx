@@ -16,6 +16,7 @@ import ColorPickerBar from './reusable/ColorPickerBar';
 import ConfirmModal from './reusable/ConfirmModal';
 import CounterSettingsFields from './reusable/CounterSettingsFields';
 import IconPickerModal from './reusable/IconPickerModal';
+import ValidationToast from './reusable/ValidationToast';
 import VibyInput from './reusable/VibyInput';
 
 interface EditCounterModalProps {
@@ -44,6 +45,9 @@ export default function EditCounterModal({
   const [icon, setIcon] = useState<string | undefined>(undefined);
   const [iconPickerVisible, setIconPickerVisible] = useState(false);
   const [subModalOpen, setSubModalOpen] = useState(false);
+  const [validationMessage, setValidationMessage] = useState<string | null>(
+    null,
+  );
 
   const counterToEdit = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
@@ -62,7 +66,10 @@ export default function EditCounterModal({
   }, [counterToEdit]);
 
   const handleSave = () => {
-    if (!counterId || label.trim() === '') {
+    if (!counterId) return;
+
+    if (label.trim() === '') {
+      setValidationMessage('Counter name is required');
       return;
     }
 
@@ -277,6 +284,11 @@ export default function EditCounterModal({
         confirmLabel='Reset'
         onConfirm={handleReset}
         onCancel={() => setConfirmResetVisible(false)}
+      />
+
+      <ValidationToast
+        message={validationMessage}
+        onDismiss={() => setValidationMessage(null)}
       />
     </Modal>
   );
