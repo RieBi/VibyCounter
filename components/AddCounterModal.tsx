@@ -73,6 +73,7 @@ export default function AddCounterModal({
     setModalVisible(false);
     setColor(DefaultColor);
     setIcon(undefined);
+    setValidationMessage(null);
   };
 
   const openIconPicker = () => {

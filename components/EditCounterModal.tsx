@@ -62,6 +62,7 @@ export default function EditCounterModal({
       setDecrementBy(String(counterToEdit.settings.decrementBy ?? 1));
       setColor(counterToEdit.styling.color ?? DefaultColor);
       setIcon(counterToEdit.styling.icon);
+      setValidationMessage(null);
     }
   }, [counterToEdit]);
 
