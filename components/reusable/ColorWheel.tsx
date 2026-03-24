@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Image, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Circle } from 'react-native-svg';
@@ -18,6 +17,7 @@ interface ColorWheelProps {
 
 function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   const c = (1 - Math.abs(2 * l - 1)) * s;
+
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = l - c / 2;
   let rr = 0,
@@ -67,7 +67,6 @@ function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
 }
 
 function generateWheelBmp(size: number): string {
-  console.log('Generating');
   const center = size / 2;
   const rowSize = Math.ceil((size * 3) / 4) * 4;
   const dataSize = rowSize * size;
@@ -121,6 +120,15 @@ function generateWheelBmp(size: number): string {
   return `data:image/bmp;base64,${base64}`;
 }
 
+let cachedWheelUri: string | null = null;
+
+function getWheelUri(): string {
+  if (!cachedWheelUri) {
+    cachedWheelUri = generateWheelBmp(WHEEL_PX);
+  }
+  return cachedWheelUri;
+}
+
 function polar(angle: number, radius: number) {
   const rad = ((angle - 90) * Math.PI) / 180;
   return {
@@ -135,7 +143,7 @@ export default function ColorWheel({
   b,
   onColorChange,
 }: ColorWheelProps) {
-  const wheelUri = useMemo(() => generateWheelBmp(WHEEL_PX), []);
+  const wheelUri = getWheelUri();
 
   const [h, s] = rgbToHsl(r, g, b);
   const indicatorDist = s * OUTER_R;
