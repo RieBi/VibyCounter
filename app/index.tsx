@@ -379,7 +379,10 @@ export default function Index() {
         <MoveToGroupModal
           counterIds={moveIds}
           visible={moveIds.length > 0}
-          onClose={() => setMoveIds([])}
+          onClose={() => {
+            setMoveIds([]);
+            clearSelection();
+          }}
         />
         <ConfirmModal
           visible={confirmDeleteSelected}
