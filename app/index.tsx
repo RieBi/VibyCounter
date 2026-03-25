@@ -10,8 +10,9 @@ import { DefaultGroup } from '@/vibes/definitions';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  BackHandler,
   Keyboard,
   ScrollView,
   Text,
@@ -56,6 +57,23 @@ export default function Index() {
     (state) => state.groups.filter((g) => g.id === selectedGroupId)[0],
   );
 
+  const closeSearch = () => {
+    setSearching(false);
+    setSearchQuery('');
+    Keyboard.dismiss();
+  };
+
+  useEffect(() => {
+    if (!searching) return;
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      closeSearch();
+      return true;
+    });
+
+    return () => sub.remove();
+  }, [searching]);
+
   const insets = useSafeAreaInsets();
 
   return (
@@ -68,44 +86,47 @@ export default function Index() {
     >
       <StatusBar style='dark' />
       <View className='flex-1'>
-        <View className='flex-row items-center p-2 gap-3'>
-          <AntDesign
-            className='p-1 ps-2'
-            name='menu'
-            size={24}
-            color='#27272a'
-            onPress={() => setDrawerVisible(true)}
-          />
-
+        <View className='flex-row items-center p-2 gap-3 h-14'>
           {searching ? (
-            <View className='flex-1 flex-row items-center gap-2'>
+            <View className='flex-1 flex-row items-center bg-zinc-100 rounded-xl px-2'>
+              <TouchableOpacity onPress={closeSearch} className='p-1'>
+                <MaterialIcons name='arrow-back' size={22} color='#71717a' />
+              </TouchableOpacity>
               <VibyInput
-                className='flex-1 bg-zinc-100 text-zinc-800 p-2 rounded-xl'
+                className='flex-1 text-zinc-800 p-2 text-base'
                 placeholder='Search counters...'
                 placeholderTextColor='#a1a1aa'
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 autoFocus
               />
-              <TouchableOpacity
-                onPress={() => {
-                  setSearching(false);
-                  setSearchQuery('');
-                  Keyboard.dismiss();
-                }}
-              >
-                <MaterialIcons name='close' size={24} color='#27272a' />
-              </TouchableOpacity>
+              {searchQuery.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => setSearchQuery('')}
+                  className='p-1'
+                >
+                  <MaterialIcons name='close' size={22} color='#71717a' />
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
-            <View className='flex-1 flex-row items-center justify-between'>
-              <Text className='font-semibold text-2xl text-zinc-800'>
-                Counters - {selectedGroup.name}
-              </Text>
-              <TouchableOpacity onPress={() => setSearching(true)}>
-                <MaterialIcons name='search' size={24} color='#27272a' />
-              </TouchableOpacity>
-            </View>
+            <>
+              <AntDesign
+                className='p-1 ps-2'
+                name='menu'
+                size={24}
+                color='#27272a'
+                onPress={() => setDrawerVisible(true)}
+              />
+              <View className='flex-1 flex-row items-center justify-between'>
+                <Text className='font-semibold text-2xl text-zinc-800'>
+                  Counters - {selectedGroup.name}
+                </Text>
+                <TouchableOpacity onPress={() => setSearching(true)}>
+                  <MaterialIcons name='search' size={24} color='#27272a' />
+                </TouchableOpacity>
+              </View>
+            </>
           )}
         </View>
 
