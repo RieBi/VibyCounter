@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Giant V watermark -->
+  <path d="M180 140 L512 880 L844 140" fill="none" stroke="#065f46" stroke-width="140" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"/>
+  <!-- App name -->
+  <text x="512" y="490" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="110" font-weight="700" fill="#ecfdf5">Viby</text>
+  <text x="512" y="570" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="46" font-weight="400" fill="#a7f3d0" letter-spacing="8">COUNTER</text>
+</svg>

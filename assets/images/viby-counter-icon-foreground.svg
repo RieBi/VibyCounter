@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Foreground only — pair with a solid #059669 adaptive background -->
+  <!-- V watermark -->
+  <path d="M230 210 L512 858 L794 210" fill="none" stroke="#065f46" stroke-width="58" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>
+  <!-- Counter value -->
+  <text x="512" y="640" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="307" font-weight="700" fill="#ecfdf5">7</text>
+  <!-- Plus button -->
+  <rect x="647" y="179" width="154" height="154" rx="51" fill="#10b981"/>
+  <line x1="695" y1="256" x2="773" y2="256" stroke="#ecfdf5" stroke-width="11" stroke-linecap="round"/>
+  <line x1="734" y1="217" x2="734" y2="295" stroke="#ecfdf5" stroke-width="11" stroke-linecap="round"/>
+  <!-- Minus button -->
+  <rect x="224" y="179" width="154" height="154" rx="51" fill="#10b981"/>
+  <line x1="272" y1="256" x2="350" y2="256" stroke="#ecfdf5" stroke-width="11" stroke-linecap="round"/>
+</svg>
