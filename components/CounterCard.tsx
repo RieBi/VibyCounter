@@ -2,7 +2,9 @@ import { useCounterShop } from '@/shop/counterShop';
 import { DefaultColor, isLightColor } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Haptics from 'expo-haptics';
+import { useRef } from 'react';
 import { Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { SharedValue } from 'react-native-reanimated';
 import { useReorderableDrag } from 'react-native-reorderable-list';
 import CounterActionsMenu from './CounterActionsMenu';
 
@@ -17,6 +19,7 @@ interface CounterCardProps {
   selected?: boolean;
   selecting?: boolean;
   onSelect?: () => void;
+  didMove?: SharedValue<boolean>;
 }
 
 export default function CounterCard({
@@ -27,6 +30,7 @@ export default function CounterCard({
   selected = false,
   selecting = false,
   onSelect,
+  didMove,
 }: CounterCardProps) {
   const drag = useReorderableDrag();
 
@@ -36,6 +40,8 @@ export default function CounterCard({
 
   const increment = useCounterShop((state) => state.increment);
 
+  const justLongPressed = useRef(false);
+
   if (!counter) return null;
 
   const color = counter.styling.color ?? DefaultColor;
@@ -44,6 +50,10 @@ export default function CounterCard({
   const btnBg = light ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)';
 
   const handlePress = () => {
+    if (justLongPressed.current) {
+      justLongPressed.current = false;
+      return;
+    }
     if (selecting) {
       onSelect?.();
     } else {
@@ -51,16 +61,29 @@ export default function CounterCard({
     }
   };
 
-  const handleLongPress = () => {
-    if (!selecting) {
-      onSelect?.();
-    }
-  };
-
   return (
     <Pressable
       onPress={handlePress}
-      onLongPress={handleLongPress}
+      onLongPress={
+        reorderable
+          ? () => {
+              if (didMove) didMove.value = false;
+              justLongPressed.current = true;
+              drag();
+            }
+          : selecting
+            ? undefined
+            : () => {
+                justLongPressed.current = true;
+                onSelect?.();
+              }
+      }
+      onPressOut={() => {
+        if (reorderable && didMove && !didMove.value) {
+          onSelect?.();
+        }
+        if (didMove) didMove.value = true;
+      }}
       style={{ backgroundColor: color }}
       className='mx-3 my-1.5 px-4 py-3 rounded-2xl'
     >

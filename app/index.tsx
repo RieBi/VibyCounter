@@ -87,9 +87,17 @@ export default function Index() {
     [localCounters, reorderCounters, selectedGroupId],
   );
 
+  const didMoveCounter = useSharedValue(false);
+
   const counterListPanGesture = useMemo(
-    () => Gesture.Pan().activeOffsetY([-5, 5]),
-    [],
+    () =>
+      Gesture.Pan()
+        .activeOffsetY([-10, 10])
+        .onStart(() => {
+          'worklet';
+          didMoveCounter.value = true;
+        }),
+    [didMoveCounter],
   );
 
   const closeSearch = useCallback(() => {
@@ -175,13 +183,14 @@ export default function Index() {
           setActionsId(id);
           setActionsPos(pos);
         }}
-        reorderable={searchQuery.trim() === '' && !selecting}
+        reorderable={searchQuery.trim() === ''}
         selected={selectedIds.has(item.id)}
         selecting={selecting}
         onSelect={() => toggleSelect(item.id)}
+        didMove={didMoveCounter}
       />
     ),
-    [searchQuery, selecting, selectedIds],
+    [searchQuery, selecting, selectedIds, didMoveCounter],
   );
 
   const insets = useSafeAreaInsets();
@@ -257,7 +266,7 @@ export default function Index() {
                 placeholderTextColor='#a1a1aa'
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                autoFocus
+                selectTextOnFocus={false}
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity
