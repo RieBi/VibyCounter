@@ -10,7 +10,7 @@ import { DefaultGroup } from '@/vibes/definitions';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   BackHandler,
   Keyboard,
@@ -19,6 +19,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -37,8 +42,11 @@ export default function Index() {
   });
 
   const [moveId, setMoveId] = useState<string | null>(null);
+
+  const searchAnim = useSharedValue(0);
   const [searching, setSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const hasSearched = useRef(false);
 
   const counters = useCounterShop(
     useShallow((state) =>
@@ -57,11 +65,12 @@ export default function Index() {
     (state) => state.groups.filter((g) => g.id === selectedGroupId)[0],
   );
 
-  const closeSearch = () => {
-    setSearching(false);
+  const closeSearch = useCallback(() => {
     setSearchQuery('');
     Keyboard.dismiss();
-  };
+    searchAnim.value = withTiming(0, { duration: 200 });
+    setTimeout(() => setSearching(false), 200);
+  }, [searchAnim]);
 
   useEffect(() => {
     if (!searching) return;
@@ -72,7 +81,23 @@ export default function Index() {
     });
 
     return () => sub.remove();
-  }, [searching]);
+  }, [closeSearch, searching]);
+
+  const openSearch = () => {
+    hasSearched.current = true;
+    setSearching(true);
+    searchAnim.value = withTiming(1, { duration: 200 });
+  };
+
+  const titleStyle = useAnimatedStyle(() => ({
+    opacity: 1 - searchAnim.value,
+    transform: [{ translateX: -searchAnim.value * 50 }],
+  }));
+
+  const searchStyle = useAnimatedStyle(() => ({
+    opacity: searchAnim.value,
+    transform: [{ translateX: (1 - searchAnim.value) * 50 }],
+  }));
 
   const insets = useSafeAreaInsets();
 
@@ -88,7 +113,10 @@ export default function Index() {
       <View className='flex-1'>
         <View className='flex-row items-center p-2 gap-3 h-14'>
           {searching ? (
-            <View className='flex-1 flex-row items-center bg-zinc-100 rounded-xl px-2'>
+            <Animated.View
+              style={searchStyle}
+              className='flex-1 flex-row items-center bg-zinc-100 rounded-xl px-2'
+            >
               <TouchableOpacity onPress={closeSearch} className='p-1'>
                 <MaterialIcons name='arrow-back' size={22} color='#71717a' />
               </TouchableOpacity>
@@ -108,9 +136,12 @@ export default function Index() {
                   <MaterialIcons name='close' size={22} color='#71717a' />
                 </TouchableOpacity>
               )}
-            </View>
+            </Animated.View>
           ) : (
-            <>
+            <Animated.View
+              style={hasSearched.current ? titleStyle : undefined}
+              className='flex-1 flex-row items-center gap-3'
+            >
               <AntDesign
                 className='p-1 ps-2'
                 name='menu'
@@ -122,14 +153,13 @@ export default function Index() {
                 <Text className='font-semibold text-2xl text-zinc-800'>
                   Counters - {selectedGroup.name}
                 </Text>
-                <TouchableOpacity onPress={() => setSearching(true)}>
-                  <MaterialIcons name='search' size={24} color='#27272a' />
+                <TouchableOpacity onPress={openSearch}>
+                  <MaterialIcons name='search' size={28} color='#27272a' />
                 </TouchableOpacity>
               </View>
-            </>
+            </Animated.View>
           )}
         </View>
-
         <ScrollView className='flex-1'>
           {counters.map((c) => (
             <CounterCard
@@ -151,16 +181,13 @@ export default function Index() {
 
           <View className='h-20' />
         </ScrollView>
-
         <View className='absolute right-6 bottom-6'>
           <AddCounterModal selectedGroupId={selectedGroupId}></AddCounterModal>
         </View>
-
         <EditCounterModal
           counterId={editingId}
           onClose={() => setEditingId(null)}
         />
-
         <ActionsPopup
           visible={!!actionsId}
           position={actionsPos}
@@ -170,13 +197,11 @@ export default function Index() {
           }}
           onClose={() => setActionsId(null)}
         />
-
         <MoveToGroupModal
           counterId={moveId}
           visible={!!moveId}
           onClose={() => setMoveId(null)}
         />
-
         <GroupDrawer
           visible={drawerVisible}
           selectedGroupId={selectedGroupId}
