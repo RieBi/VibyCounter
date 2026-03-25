@@ -13,12 +13,20 @@ interface CounterCardProps {
     id: string,
     position: { x: number; y: number; width: number; height: number },
   ) => void;
+  reorderable?: boolean;
+  selected?: boolean;
+  selecting?: boolean;
+  onSelect?: () => void;
 }
 
 export default function CounterCard({
   counterId,
   onEdit,
   onActions,
+  reorderable = true,
+  selected = false,
+  selecting = false,
+  onSelect,
 }: CounterCardProps) {
   const drag = useReorderableDrag();
 
@@ -35,15 +43,43 @@ export default function CounterCard({
   const textColor = light ? '#18181b' : '#fafafa';
   const btnBg = light ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)';
 
+  const handlePress = () => {
+    if (selecting) {
+      onSelect?.();
+    } else {
+      onEdit();
+    }
+  };
+
+  const handleLongPress = () => {
+    if (!selecting) {
+      onSelect?.();
+    }
+  };
+
   return (
     <Pressable
-      onPress={onEdit}
-      onLongPress={drag}
+      onPress={handlePress}
+      onLongPress={handleLongPress}
       style={{ backgroundColor: color }}
       className='mx-3 my-1.5 px-4 py-3 rounded-2xl'
     >
+      {/* Dim overlay when selecting but not selected */}
+      {selecting && !selected && (
+        <View
+          className='absolute inset-0 bg-black/30 rounded-2xl'
+          pointerEvents='none'
+        />
+      )}
       <View className='flex-row items-center justify-between'>
         <View className='flex-row items-center flex-1 gap-2'>
+          {selecting && (
+            <MaterialIcons
+              name={selected ? 'check-circle' : 'radio-button-unchecked'}
+              size={20}
+              color={selected ? '#22c55e' : textColor}
+            />
+          )}
           {counter.styling.icon && (
             <MaterialIcons
               name={counter.styling.icon as keyof typeof MaterialIcons.glyphMap}
@@ -59,10 +95,12 @@ export default function CounterCard({
             {counter.label}
           </Text>
         </View>
-        <CounterActionsMenu
-          iconColor={textColor}
-          onPress={(pos) => onActions(counterId, pos)}
-        />
+        {!selecting && (
+          <CounterActionsMenu
+            iconColor={textColor}
+            onPress={(pos) => onActions(counterId, pos)}
+          />
+        )}
       </View>
 
       <View className='flex-row items-center justify-center gap-8 pt-1 pb-3'>

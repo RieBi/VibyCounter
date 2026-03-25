@@ -14,13 +14,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import VibyInput from './reusable/VibyInput';
 
 interface MoveToGroupModalProps {
-  counterId: string | null;
+  counterIds: string[];
   visible: boolean;
   onClose: () => void;
 }
 
 export default function MoveToGroupModal({
-  counterId,
+  counterIds,
   visible,
   onClose,
 }: MoveToGroupModalProps) {
@@ -28,7 +28,7 @@ export default function MoveToGroupModal({
 
   const groups = useCounterShop((state) => state.groups);
   const counter = useCounterShop((state) =>
-    state.counters.find((c) => c.id === counterId),
+    state.counters.find((c) => c.id === counterIds[0]),
   );
   const updateCounter = useCounterShop((state) => state.updateCounter);
 
@@ -39,11 +39,7 @@ export default function MoveToGroupModal({
   const insets = useSafeAreaInsets();
 
   const handleMove = (groupId: string) => {
-    if (!counterId) {
-      return;
-    }
-
-    updateCounter(counterId, { groupId });
+    counterIds.forEach((id) => updateCounter(id, { groupId }));
     setSearch('');
     onClose();
   };

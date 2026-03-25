@@ -4,6 +4,7 @@ import CounterCard from '@/components/CounterCard';
 import EditCounterModal from '@/components/EditCounterModal';
 import GroupDrawer from '@/components/GroupDrawer';
 import MoveToGroupModal from '@/components/MoveToGroupModal';
+import ConfirmModal from '@/components/reusable/ConfirmModal';
 import VibyInput from '@/components/reusable/VibyInput';
 import { useCounterShop } from '@/shop/counterShop';
 import { Counter, DefaultGroup } from '@/vibes/definitions';
@@ -44,8 +45,6 @@ export default function Index() {
     width: 0,
     height: 0,
   });
-
-  const [moveId, setMoveId] = useState<string | null>(null);
 
   const searchAnim = useSharedValue(0);
   const [searching, setSearching] = useState(false);
@@ -93,21 +92,6 @@ export default function Index() {
     [],
   );
 
-  const renderCounter = useCallback(
-    ({ item }: { item: Counter }) => (
-      <CounterCard
-        key={item.id}
-        counterId={item.id}
-        onEdit={() => setEditingId(item.id)}
-        onActions={(id, pos) => {
-          setActionsId(id);
-          setActionsPos(pos);
-        }}
-      />
-    ),
-    [],
-  );
-
   const closeSearch = useCallback(() => {
     setSearchQuery('');
     Keyboard.dismiss();
@@ -142,6 +126,64 @@ export default function Index() {
     transform: [{ translateX: (1 - searchAnim.value) * 50 }],
   }));
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const selecting = selectedIds.size > 0;
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const deleteCounter = useCounterShop((state) => state.deleteCounter);
+
+  const selectAll = () => {
+    setSelectedIds(new Set(localCounters.map((c) => c.id)));
+  };
+
+  const handleDeleteSelected = () => {
+    selectedIds.forEach((id) => deleteCounter(id));
+    clearSelection();
+    setConfirmDeleteSelected(false);
+  };
+
+  const [moveIds, setMoveIds] = useState<string[]>([]);
+  const [confirmDeleteSelected, setConfirmDeleteSelected] = useState(false);
+
+  useEffect(() => {
+    if (!selecting) return;
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      clearSelection();
+      return true;
+    });
+
+    return () => sub.remove();
+  }, [selecting]);
+
+  const renderCounter = useCallback(
+    ({ item }: { item: Counter }) => (
+      <CounterCard
+        counterId={item.id}
+        onEdit={() => setEditingId(item.id)}
+        onActions={(id, pos) => {
+          setActionsId(id);
+          setActionsPos(pos);
+        }}
+        reorderable={searchQuery.trim() === '' && !selecting}
+        selected={selectedIds.has(item.id)}
+        selecting={selecting}
+        onSelect={() => toggleSelect(item.id)}
+      />
+    ),
+    [searchQuery, selecting, selectedIds],
+  );
+
   const insets = useSafeAreaInsets();
 
   return (
@@ -155,7 +197,53 @@ export default function Index() {
       <StatusBar style='dark' />
       <View className='flex-1'>
         <View className='flex-row items-center p-2 gap-3 h-14'>
-          {searching ? (
+          {selecting ? (
+            <View className='flex-1 flex-row items-center gap-3'>
+              <TouchableOpacity
+                className='bg-zinc-100 p-2 rounded-xl'
+                onPress={clearSelection}
+              >
+                <MaterialIcons name='arrow-back' size={22} color='#3f3f46' />
+              </TouchableOpacity>
+              <View className='flex-1 flex-row items-center justify-between bg-zinc-100 px-4 py-2 rounded-xl'>
+                <Text
+                  className='flex-1 font-semibold text-lg text-zinc-700'
+                  style={{ lineHeight: 18 }}
+                >
+                  {selectedIds.size} selected
+                </Text>
+                <View className='flex-row items-center gap-4'>
+                  <TouchableOpacity onPress={selectAll}>
+                    <MaterialIcons
+                      name='select-all'
+                      size={22}
+                      color='#71717a'
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setMoveIds([...selectedIds]);
+                    }}
+                  >
+                    <MaterialIcons
+                      name='drive-file-move-outline'
+                      size={22}
+                      color='#71717a'
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setConfirmDeleteSelected(true)}
+                  >
+                    <MaterialIcons
+                      name='delete-outline'
+                      size={22}
+                      color='#ef4444'
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          ) : searching ? (
             <Animated.View
               style={searchStyle}
               className='flex-1 flex-row items-center bg-zinc-100 rounded-xl px-2'
@@ -245,15 +333,26 @@ export default function Index() {
           visible={!!actionsId}
           position={actionsPos}
           onMoveTo={() => {
-            setMoveId(actionsId);
+            if (!actionsId) {
+              return;
+            }
+
+            setMoveIds([actionsId]);
             setActionsId(null);
           }}
           onClose={() => setActionsId(null)}
         />
         <MoveToGroupModal
-          counterId={moveId}
-          visible={!!moveId}
-          onClose={() => setMoveId(null)}
+          counterIds={moveIds}
+          visible={moveIds.length > 0}
+          onClose={() => setMoveIds([])}
+        />
+        <ConfirmModal
+          visible={confirmDeleteSelected}
+          title='Delete Counters'
+          message={`Are you sure you want to delete ${selectedIds.size} counter${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`}
+          onConfirm={handleDeleteSelected}
+          onCancel={() => setConfirmDeleteSelected(false)}
         />
         <GroupDrawer
           visible={drawerVisible}
