@@ -142,19 +142,34 @@ export default function Index() {
               style={hasSearched.current ? titleStyle : undefined}
               className='flex-1 flex-row items-center gap-3'
             >
-              <AntDesign
-                className='p-1 ps-2'
-                name='menu'
-                size={24}
-                color='#27272a'
+              <TouchableOpacity
+                className='bg-zinc-100 p-2 rounded-xl'
                 onPress={() => setDrawerVisible(true)}
-              />
-              <View className='flex-1 flex-row items-center justify-between'>
-                <Text className='font-semibold text-2xl text-zinc-800'>
-                  Counters - {selectedGroup.name}
+              >
+                <AntDesign name='menu' size={22} color='#3f3f46' />
+              </TouchableOpacity>
+
+              <View className='flex-1 flex-row items-center bg-zinc-100 px-4 py-2 rounded-xl'>
+                {selectedGroup.styling?.icon && (
+                  <MaterialIcons
+                    name={
+                      selectedGroup.styling
+                        .icon as keyof typeof MaterialIcons.glyphMap
+                    }
+                    size={18}
+                    color='#52525b'
+                    style={{ marginRight: 8 }}
+                  />
+                )}
+                <Text
+                  className='flex-1 font-semibold text-lg text-zinc-700'
+                  numberOfLines={1}
+                  style={{ lineHeight: 18 }}
+                >
+                  {selectedGroup.name}
                 </Text>
                 <TouchableOpacity onPress={openSearch}>
-                  <MaterialIcons name='search' size={28} color='#27272a' />
+                  <MaterialIcons name='search' size={22} color='#71717a' />
                 </TouchableOpacity>
               </View>
             </Animated.View>
