@@ -11,10 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  Gesture,
-  GestureDetector
-} from 'react-native-gesture-handler';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, {
   SharedValue,
@@ -71,6 +68,7 @@ const GroupItem = memo(function GroupItem({
       onPressOut={() => {
         if (!didMove.value) {
           onEdit();
+          didMove.value = true;
         }
       }}
     >
@@ -114,7 +112,7 @@ export default function GroupDrawer({
   const swipedClosed = useRef(false);
   const insets = useSafeAreaInsets();
 
-  const didMove = useSharedValue(false);
+  const didMove = useSharedValue(true);
 
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
 
