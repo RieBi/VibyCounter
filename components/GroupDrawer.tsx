@@ -38,7 +38,6 @@ interface GroupDrawerProps {
   selectedGroupId: string;
   onSelectGroup: (id: string) => void;
   onClose: () => void;
-  parentGesture: PanGesture;
 }
 
 const DRAWER_WIDTH = Dimensions.get('window').width * 0.75;
