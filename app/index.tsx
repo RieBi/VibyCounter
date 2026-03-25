@@ -6,24 +6,28 @@ import GroupDrawer from '@/components/GroupDrawer';
 import MoveToGroupModal from '@/components/MoveToGroupModal';
 import VibyInput from '@/components/reusable/VibyInput';
 import { useCounterShop } from '@/shop/counterShop';
-import { DefaultGroup } from '@/vibes/definitions';
+import { Counter, DefaultGroup } from '@/vibes/definitions';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BackHandler,
   Keyboard,
-  ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Gesture } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import ReorderableList, {
+  ReorderableListReorderEvent,
+  reorderItems,
+} from 'react-native-reorderable-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -48,7 +52,7 @@ export default function Index() {
   const [searchQuery, setSearchQuery] = useState('');
   const hasSearched = useRef(false);
 
-  const counters = useCounterShop(
+  const counterObjects = useCounterShop(
     useShallow((state) =>
       state.counters
         .filter((c) => c.groupId === selectedGroupId)
@@ -56,13 +60,52 @@ export default function Index() {
           searchQuery.trim() === ''
             ? true
             : c.label.toLowerCase().includes(searchQuery.toLowerCase()),
-        )
-        .map((c) => c.id),
+        ),
     ),
   );
 
   const selectedGroup = useCounterShop(
     (state) => state.groups.filter((g) => g.id === selectedGroupId)[0],
+  );
+
+  const reorderCounters = useCounterShop((state) => state.reorderCounters);
+
+  const [localCounters, setLocalCounters] = useState(counterObjects);
+
+  useEffect(() => {
+    setLocalCounters(counterObjects);
+  }, [counterObjects]);
+
+  const handleCounterReorder = useCallback(
+    ({ from, to }: ReorderableListReorderEvent) => {
+      const reordered = reorderItems(localCounters, from, to);
+      setLocalCounters(reordered);
+      reorderCounters(
+        selectedGroupId,
+        reordered.map((c) => c.id),
+      );
+    },
+    [localCounters, reorderCounters, selectedGroupId],
+  );
+
+  const counterListPanGesture = useMemo(
+    () => Gesture.Pan().activeOffsetY([-5, 5]),
+    [],
+  );
+
+  const renderCounter = useCallback(
+    ({ item }: { item: Counter }) => (
+      <CounterCard
+        key={item.id}
+        counterId={item.id}
+        onEdit={() => setEditingId(item.id)}
+        onActions={(id, pos) => {
+          setActionsId(id);
+          setActionsPos(pos);
+        }}
+      />
+    ),
+    [],
   );
 
   const closeSearch = useCallback(() => {
@@ -175,27 +218,22 @@ export default function Index() {
             </Animated.View>
           )}
         </View>
-        <ScrollView className='flex-1'>
-          {counters.map((c) => (
-            <CounterCard
-              key={c}
-              counterId={c}
-              onEdit={() => setEditingId(c)}
-              onActions={(id, pos) => {
-                setActionsId(id);
-                setActionsPos(pos);
-              }}
-            />
-          ))}
-
-          {counters.length === 0 && searchQuery.trim() !== '' && (
-            <Text className='text-zinc-400 text-center mt-8'>
-              No counters matching &quot;{searchQuery}&quot;
-            </Text>
-          )}
-
-          <View className='h-20' />
-        </ScrollView>
+        <ReorderableList
+          data={localCounters}
+          keyExtractor={(item) => item.id}
+          renderItem={renderCounter}
+          onReorder={handleCounterReorder}
+          panGesture={counterListPanGesture}
+          dragEnabled={searchQuery.trim() === ''}
+          ListFooterComponent={<View className='h-20' />}
+          ListEmptyComponent={
+            searchQuery.trim() !== '' ? (
+              <Text className='text-zinc-400 text-center mt-8'>
+                No counters matching &quot;{searchQuery}&quot;
+              </Text>
+            ) : null
+          }
+        />
         <View className='absolute right-6 bottom-6'>
           <AddCounterModal selectedGroupId={selectedGroupId}></AddCounterModal>
         </View>

@@ -3,6 +3,7 @@ import { DefaultColor, isLightColor } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Haptics from 'expo-haptics';
 import { Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { useReorderableDrag } from 'react-native-reorderable-list';
 import CounterActionsMenu from './CounterActionsMenu';
 
 interface CounterCardProps {
@@ -19,6 +20,8 @@ export default function CounterCard({
   onEdit,
   onActions,
 }: CounterCardProps) {
+  const drag = useReorderableDrag();
+
   const counter = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
   );
@@ -35,6 +38,7 @@ export default function CounterCard({
   return (
     <Pressable
       onPress={onEdit}
+      onLongPress={drag}
       style={{ backgroundColor: color }}
       className='mx-3 my-1.5 px-4 py-3 rounded-2xl'
     >
