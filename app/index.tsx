@@ -4,12 +4,20 @@ import CounterCard from '@/components/CounterCard';
 import EditCounterModal from '@/components/EditCounterModal';
 import GroupDrawer from '@/components/GroupDrawer';
 import MoveToGroupModal from '@/components/MoveToGroupModal';
+import VibyInput from '@/components/reusable/VibyInput';
 import { useCounterShop } from '@/shop/counterShop';
 import { DefaultGroup } from '@/vibes/definitions';
 import AntDesign from '@expo/vector-icons/AntDesign';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import {
+  Keyboard,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -26,12 +34,20 @@ export default function Index() {
     width: 0,
     height: 0,
   });
+
   const [moveId, setMoveId] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const counters = useCounterShop(
     useShallow((state) =>
       state.counters
         .filter((c) => c.groupId === selectedGroupId)
+        .filter((c) =>
+          searchQuery.trim() === ''
+            ? true
+            : c.label.toLowerCase().includes(searchQuery.toLowerCase()),
+        )
         .map((c) => c.id),
     ),
   );
@@ -60,9 +76,37 @@ export default function Index() {
             color='#27272a'
             onPress={() => setDrawerVisible(true)}
           />
-          <Text className='font-semibold text-2xl text-zinc-800'>
-            Counters - {selectedGroup.name}
-          </Text>
+
+          {searching ? (
+            <View className='flex-1 flex-row items-center gap-2'>
+              <VibyInput
+                className='flex-1 bg-zinc-100 text-zinc-800 p-2 rounded-xl'
+                placeholder='Search counters...'
+                placeholderTextColor='#a1a1aa'
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+              />
+              <TouchableOpacity
+                onPress={() => {
+                  setSearching(false);
+                  setSearchQuery('');
+                  Keyboard.dismiss();
+                }}
+              >
+                <MaterialIcons name='close' size={24} color='#27272a' />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View className='flex-1 flex-row items-center justify-between'>
+              <Text className='font-semibold text-2xl text-zinc-800'>
+                Counters - {selectedGroup.name}
+              </Text>
+              <TouchableOpacity onPress={() => setSearching(true)}>
+                <MaterialIcons name='search' size={24} color='#27272a' />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         <ScrollView className='flex-1'>
@@ -71,14 +115,20 @@ export default function Index() {
               key={c}
               counterId={c}
               onEdit={() => setEditingId(c)}
-              onActions={(id, position) => {
+              onActions={(id, pos) => {
                 setActionsId(id);
-                setActionsPos(position);
+                setActionsPos(pos);
               }}
-            ></CounterCard>
+            />
           ))}
 
-          <View className='h-20'></View>
+          {counters.length === 0 && searchQuery.trim() !== '' && (
+            <Text className='text-zinc-400 text-center mt-8'>
+              No counters matching &quot;{searchQuery}&quot;
+            </Text>
+          )}
+
+          <View className='h-20' />
         </ScrollView>
 
         <View className='absolute right-6 bottom-6'>
