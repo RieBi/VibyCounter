@@ -13,8 +13,7 @@ import {
 } from 'react-native';
 import {
   Gesture,
-  GestureDetector,
-  PanGesture,
+  GestureDetector
 } from 'react-native-gesture-handler';
 import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, {
