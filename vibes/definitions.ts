@@ -75,6 +75,7 @@ export const HistoryUtils = {
   isHistoryEntryIncrement,
 };
 
+
 export function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '');
   return [
@@ -96,4 +97,46 @@ export function rgbToHex(r: number, g: number, b: number): string {
     '#' +
     [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')
   );
+}
+
+export type SortField = 'manual' | 'name' | 'value' | 'created' | 'lastAction';
+export type SortDirection = 'asc' | 'desc';
+
+export function getLastActionTimestamp(counter: Counter): number {
+  if (counter.history.length === 0) return 0;
+  return counter.history[counter.history.length - 1].timestamp;
+}
+
+export function getCreationTimestamp(counter: Counter): number {
+  const creation = counter.history.find((h) => h.type === HistoryCreation);
+  return creation?.timestamp ?? 0;
+}
+
+export function sortCounters(
+  counters: Counter[],
+  field: SortField,
+  direction: SortDirection,
+): Counter[] {
+  if (field === 'manual') return counters;
+
+  const sorted = [...counters].sort((a, b) => {
+    let cmp = 0;
+    switch (field) {
+      case 'name':
+        cmp = a.label.localeCompare(b.label);
+        break;
+      case 'value':
+        cmp = a.count - b.count;
+        break;
+      case 'created':
+        cmp = getCreationTimestamp(a) - getCreationTimestamp(b);
+        break;
+      case 'lastAction':
+        cmp = getLastActionTimestamp(a) - getLastActionTimestamp(b);
+        break;
+    }
+    return direction === 'desc' ? -cmp : cmp;
+  });
+
+  return sorted;
 }

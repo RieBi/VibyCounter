@@ -6,8 +6,15 @@ import GroupDrawer from '@/components/GroupDrawer';
 import MoveToGroupModal from '@/components/MoveToGroupModal';
 import ConfirmModal from '@/components/reusable/ConfirmModal';
 import VibyInput from '@/components/reusable/VibyInput';
+import SortModal from '@/components/SortModal';
 import { useCounterShop } from '@/shop/counterShop';
-import { Counter, DefaultGroup } from '@/vibes/definitions';
+import {
+  Counter,
+  DefaultGroup,
+  sortCounters,
+  SortDirection,
+  SortField,
+} from '@/vibes/definitions';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { StatusBar } from 'expo-status-bar';
@@ -51,16 +58,22 @@ export default function Index() {
   const [searchQuery, setSearchQuery] = useState('');
   const hasSearched = useRef(false);
 
+  const [sortField, setSortField] = useState<SortField>('manual');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const isManualOrder = sortField === 'manual';
+  const [sortModalVisible, setSortModalVisible] = useState(false);
+
   const counterObjects = useCounterShop(
-    useShallow((state) =>
-      state.counters
+    useShallow((state) => {
+      const filtered = state.counters
         .filter((c) => c.groupId === selectedGroupId)
         .filter((c) =>
           searchQuery.trim() === ''
             ? true
             : c.label.toLowerCase().includes(searchQuery.toLowerCase()),
-        ),
-    ),
+        );
+      return sortCounters(filtered, sortField, sortDirection);
+    }),
   );
 
   const selectedGroup = useCounterShop(
@@ -174,6 +187,8 @@ export default function Index() {
     return () => sub.remove();
   }, [selecting]);
 
+  const reorderable = searchQuery.trim() === '' && isManualOrder && !selecting;
+
   const renderCounter = useCallback(
     ({ item }: { item: Counter }) => (
       <CounterCard
@@ -183,14 +198,14 @@ export default function Index() {
           setActionsId(id);
           setActionsPos(pos);
         }}
-        reorderable={searchQuery.trim() === ''}
+        reorderable={reorderable}
         selected={selectedIds.has(item.id)}
         selecting={selecting}
         onSelect={() => toggleSelect(item.id)}
         didMove={didMoveCounter}
       />
     ),
-    [searchQuery, selecting, selectedIds, didMoveCounter],
+    [reorderable, selectedIds, selecting, didMoveCounter],
   );
 
   const insets = useSafeAreaInsets();
@@ -289,7 +304,7 @@ export default function Index() {
                 <AntDesign name='menu' size={22} color='#3f3f46' />
               </TouchableOpacity>
 
-              <View className='flex-1 flex-row items-center bg-zinc-100 px-4 py-2 rounded-xl'>
+              <View className='flex-1 flex-row items-center justify-between bg-zinc-100 px-4 py-2 rounded-xl'>
                 {selectedGroup.styling?.icon && (
                   <MaterialIcons
                     name={
@@ -308,9 +323,18 @@ export default function Index() {
                 >
                   {selectedGroup.name}
                 </Text>
-                <TouchableOpacity onPress={openSearch}>
-                  <MaterialIcons name='search' size={22} color='#71717a' />
-                </TouchableOpacity>
+                <View className='flex-row items-center gap-3'>
+                  <TouchableOpacity onPress={() => setSortModalVisible(true)}>
+                    <MaterialIcons
+                      name='sort'
+                      size={22}
+                      color={isManualOrder ? '#71717a' : '#059669'}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={openSearch}>
+                    <MaterialIcons name='search' size={22} color='#71717a' />
+                  </TouchableOpacity>
+                </View>
               </View>
             </Animated.View>
           )}
@@ -321,7 +345,7 @@ export default function Index() {
           renderItem={renderCounter}
           onReorder={handleCounterReorder}
           panGesture={counterListPanGesture}
-          dragEnabled={searchQuery.trim() === ''}
+          dragEnabled={reorderable}
           ListFooterComponent={<View className='h-20' />}
           ListEmptyComponent={
             searchQuery.trim() !== '' ? (
@@ -368,6 +392,16 @@ export default function Index() {
           selectedGroupId={selectedGroupId}
           onSelectGroup={setSelectedGroupId}
           onClose={() => setDrawerVisible(false)}
+        />
+        <SortModal
+          visible={sortModalVisible}
+          field={sortField}
+          direction={sortDirection}
+          onSelect={(f, d) => {
+            setSortField(f);
+            setSortDirection(d);
+          }}
+          onClose={() => setSortModalVisible(false)}
         />
       </View>
     </View>
