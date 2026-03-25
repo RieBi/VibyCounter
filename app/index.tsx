@@ -282,6 +282,7 @@ export default function Index() {
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 selectTextOnFocus={false}
+                autoFocus
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity

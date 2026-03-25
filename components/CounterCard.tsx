@@ -68,7 +68,6 @@ export default function CounterCard({
         reorderable
           ? () => {
               if (didMove) didMove.value = false;
-              justLongPressed.current = true;
               drag();
             }
           : selecting
