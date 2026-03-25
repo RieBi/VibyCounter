@@ -47,6 +47,7 @@ interface CounterState {
   addGroup: (name: string, icon?: string) => void;
   updateGroup: (id: string, updates: Partial<Group>) => void;
   deleteGroup: (id: string) => void;
+  reorderGroups: (orderedIds: string[]) => void;
 }
 
 export const useCounterShop = create<CounterState>()(
@@ -234,16 +235,19 @@ export const useCounterShop = create<CounterState>()(
         set(() => ({
           counters: [],
         })),
+
       addGroup: (name, icon) =>
         set((state) => ({
           groups: [...state.groups, { id: uuid(), name, styling: { icon } }],
         })),
+
       updateGroup: (id, updates) =>
         set((state) => ({
           groups: state.groups.map((group) =>
             group.id === id ? { ...group, ...updates } : group,
           ),
         })),
+
       deleteGroup: (id) =>
         set((state) => ({
           groups: state.groups.filter((group) => group.id !== id),
@@ -253,6 +257,15 @@ export const useCounterShop = create<CounterState>()(
               : counter,
           ),
         })),
+
+      reorderGroups: (orderedIds) =>
+        set((state) => {
+          const defaultGroup = state.groups[0];
+          const reordered = orderedIds
+            .map((id) => state.groups.find((g) => g.id === id))
+            .filter(Boolean) as Group[];
+          return { groups: [defaultGroup, ...reordered] };
+        }),
     }),
     {
       name: 'counter-storage',

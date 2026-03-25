@@ -1,22 +1,33 @@
 import { useCounterShop } from '@/shop/counterShop';
+import { Group } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BackHandler,
   Dimensions,
   Keyboard,
   Pressable,
-  ScrollView,
   Text,
   TouchableOpacity,
+  View,
 } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  Gesture,
+  GestureDetector,
+  PanGesture,
+} from 'react-native-gesture-handler';
 import { useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 import Animated, {
+  SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import ReorderableList, {
+  ReorderableListReorderEvent,
+  reorderItems,
+  useReorderableDrag,
+} from 'react-native-reorderable-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EditGroupModal from './EditGroupModal';
 import ValidationToast from './reusable/ValidationToast';
@@ -27,11 +38,57 @@ interface GroupDrawerProps {
   selectedGroupId: string;
   onSelectGroup: (id: string) => void;
   onClose: () => void;
+  parentGesture: PanGesture;
 }
 
 const DRAWER_WIDTH = Dimensions.get('window').width * 0.75;
 const CLOSE_THRESHOLD = DRAWER_WIDTH * 0.35;
 const DURATION = 250;
+
+const GroupItem = memo(function GroupItem({
+  item,
+  isSelected,
+  onSelect,
+  onEdit,
+  didMove,
+}: {
+  item: Group;
+  isSelected: boolean;
+  onSelect: () => void;
+  onEdit: () => void;
+  didMove: SharedValue<boolean>;
+}) {
+  const drag = useReorderableDrag();
+
+  return (
+    <TouchableOpacity
+      className={`flex-row items-center px-4 py-3 gap-2 ${
+        isSelected ? 'bg-zinc-100' : ''
+      }`}
+      onPress={onSelect}
+      onLongPress={() => {
+        didMove.value = false;
+        drag();
+      }}
+      onPressOut={() => {
+        if (!didMove.value) {
+          onEdit();
+        }
+      }}
+    >
+      {item.styling?.icon && (
+        <MaterialIcons
+          name={item.styling.icon as keyof typeof MaterialIcons.glyphMap}
+          size={20}
+          color='#3f3f46'
+        />
+      )}
+      <Text className='text-zinc-800 text-lg flex-1' numberOfLines={1}>
+        {item.name}
+      </Text>
+    </TouchableOpacity>
+  );
+});
 
 export default function GroupDrawer({
   visible,
@@ -49,10 +106,17 @@ export default function GroupDrawer({
     null,
   );
 
+  const defaultGroup = groups[0];
+  const customGroups = useMemo(() => groups.slice(1), [groups]);
+  const [localGroups, setLocalGroups] = useState(customGroups);
+  const reorderGroups = useCounterShop((state) => state.reorderGroups);
+
   const translateX = useSharedValue(-DRAWER_WIDTH);
   const backdropOpacity = useSharedValue(0);
   const swipedClosed = useRef(false);
   const insets = useSafeAreaInsets();
+
+  const didMove = useSharedValue(false);
 
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
 
@@ -133,16 +197,57 @@ export default function GroupDrawer({
     setNewGroupName('');
   };
 
-  const handleSelect = (id: string) => {
-    onSelectGroup(id);
-    onClose();
-  };
+  const handleSelect = useCallback(
+    (id: string) => {
+      onSelectGroup(id);
+      onClose();
+    },
+    [onClose, onSelectGroup],
+  );
 
   const handleClose = () => {
     Keyboard.dismiss();
     setValidationMessage(null);
     onClose();
   };
+
+  const renderItem = useCallback(
+    ({ item }: { item: Group }) => (
+      <GroupItem
+        item={item}
+        isSelected={item.id === selectedGroupId}
+        onSelect={() => handleSelect(item.id)}
+        onEdit={() => setEditingGroupId(item.id)}
+        didMove={didMove}
+      />
+    ),
+    [selectedGroupId, handleSelect, setEditingGroupId, didMove],
+  );
+
+  const handleReorder = useCallback(
+    ({ from, to }: ReorderableListReorderEvent) => {
+      const reordered = reorderItems(localGroups, from, to);
+      setLocalGroups(reordered);
+      reorderGroups(reordered.map((g) => g.id));
+    },
+    [localGroups, reorderGroups],
+  );
+
+  useEffect(() => {
+    setLocalGroups(customGroups);
+  }, [customGroups]);
+
+  const listPanGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetY([-10, 10])
+        .onStart(() => {
+          'worklet';
+          didMove.value = true;
+        })
+        .simultaneousWithExternalGesture(panGesture),
+    [didMove, panGesture],
+  );
 
   if (!mounted) return null;
 
@@ -168,35 +273,44 @@ export default function GroupDrawer({
             Groups
           </Text>
 
-          {/* Scrollable group list */}
-          <ScrollView className='flex-1' keyboardShouldPersistTaps='handled'>
-            {groups.map((group) => (
-              <TouchableOpacity
-                key={group.id}
-                className={`flex-row items-center px-4 py-3 gap-3 ${
-                  group.id === selectedGroupId ? 'bg-zinc-100' : ''
-                }`}
-                onPress={() => handleSelect(group.id)}
-                onLongPress={() => setEditingGroupId(group.id)}
-              >
-                {group.styling?.icon && (
-                  <MaterialIcons
-                    name={
-                      group.styling.icon as keyof typeof MaterialIcons.glyphMap
-                    }
-                    size={20}
-                    color='#3f3f46'
-                  />
-                )}
-                <Text
-                  className='text-zinc-800 text-lg flex-1 mr-2'
-                  numberOfLines={1}
-                >
-                  {group.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          {/* Default group - fixed */}
+          <TouchableOpacity
+            className={`flex-row items-center px-4 py-3 gap-3 ${
+              defaultGroup.id === selectedGroupId ? 'bg-zinc-100' : ''
+            }`}
+            onPress={() => handleSelect(defaultGroup.id)}
+            onLongPress={() => setEditingGroupId(defaultGroup.id)}
+          >
+            {defaultGroup.styling?.icon && (
+              <MaterialIcons
+                name={
+                  defaultGroup.styling
+                    .icon as keyof typeof MaterialIcons.glyphMap
+                }
+                size={20}
+                color='#3f3f46'
+              />
+            )}
+            <Text
+              className='text-zinc-800 text-lg flex-1 mr-2'
+              numberOfLines={1}
+            >
+              {defaultGroup.name}
+            </Text>
+          </TouchableOpacity>
+
+          <View className='h-px bg-zinc-200 mx-4' />
+
+          {/* Draggable custom groups */}
+          <View className='flex-1'>
+            <ReorderableList
+              data={localGroups}
+              keyExtractor={(item) => item.id}
+              renderItem={renderItem}
+              onReorder={handleReorder}
+              panGesture={listPanGesture}
+            />
+          </View>
 
           {/* Fixed bottom bar, animated with keyboard */}
           <Animated.View
