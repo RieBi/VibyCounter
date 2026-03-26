@@ -23,6 +23,7 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/disableNavBarContrast",
       [
         "expo-splash-screen",
         {
