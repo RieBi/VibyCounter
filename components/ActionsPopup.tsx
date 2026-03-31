@@ -13,6 +13,7 @@ interface ActionsPopupProps {
   visible: boolean;
   position: { x: number; y: number; width: number; height: number };
   onMoveTo: () => void;
+  onDuplicate: () => void;
   onClose: () => void;
 }
 
@@ -20,6 +21,7 @@ export default function ActionsPopup({
   visible,
   position,
   onMoveTo,
+  onDuplicate,
   onClose,
 }: ActionsPopupProps) {
   const [popupHeight, setPopupHeight] = useState(0);
@@ -58,6 +60,14 @@ export default function ActionsPopup({
               color='#3f3f46'
             />
             <Text className='text-zinc-800 text-base'>Move to...</Text>
+          </TouchableOpacity>
+          <View className='border-b border-zinc-100' />
+          <TouchableOpacity
+            className='flex-row items-center gap-3 px-4 py-3'
+            onPress={onDuplicate}
+          >
+            <MaterialIcons name='content-copy' size={20} color='#3f3f46' />
+            <Text className='text-zinc-800 text-base'>Duplicate</Text>
           </TouchableOpacity>
         </View>
       </Pressable>

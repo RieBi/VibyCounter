@@ -42,6 +42,7 @@ interface CounterState {
   increment: (id: string, amount: number) => void;
   resetCounter: (id: string) => void;
   deleteCounter: (id: string) => void;
+  duplicateCounter: (id: string) => void;
   reorderCounters: (groupId: string, orderedIds: string[]) => void;
   clearHistory: (id: string) => void;
   deleteAll: () => void;
@@ -219,6 +220,21 @@ export const useCounterShop = create<CounterState>()(
         set((state) => ({
           counters: state.counters.filter((c) => c.id !== id),
         })),
+
+      duplicateCounter: (id) =>
+        set((state) => {
+          const idx = state.counters.findIndex((c) => c.id === id);
+          if (idx === -1) return {};
+          const source = state.counters[idx];
+          const duplicate: Counter = {
+            ...source,
+            id: uuid(),
+            history: [{ type: HistoryCreation, timestamp: Date.now() }],
+          };
+          const counters = [...state.counters];
+          counters.splice(idx + 1, 0, duplicate);
+          return { counters };
+        }),
 
       reorderCounters: (groupId: string, orderedIds: string[]) =>
         set((state) => {

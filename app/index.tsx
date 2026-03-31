@@ -93,6 +93,7 @@ export default function Index() {
 
   // --- Reordering ---
   const reorderCounters = useCounterShop((state) => state.reorderCounters);
+  const duplicateCounter = useCounterShop((state) => state.duplicateCounter);
   const didMoveCounter = useSharedValue(false);
   const reorderable = searchQuery.trim() === '' && isManualOrder && !selecting;
 
@@ -211,6 +212,11 @@ export default function Index() {
           onMoveTo={() => {
             if (!actionsId) return;
             setMoveIds([actionsId]);
+            setActionsId(null);
+          }}
+          onDuplicate={() => {
+            if (!actionsId) return;
+            duplicateCounter(actionsId);
             setActionsId(null);
           }}
           onClose={() => setActionsId(null)}
