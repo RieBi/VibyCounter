@@ -7,6 +7,7 @@ import {
   HistoryReset,
   HistorySettingsChange,
 } from '@/vibes/definitions';
+import { useSettingsShop } from '@/shop/settingsShop';
 import 'react-native-get-random-values';
 import { createMMKV } from 'react-native-mmkv';
 import { v4 as uuid } from 'uuid';
@@ -223,16 +224,27 @@ export const useCounterShop = create<CounterState>()(
 
       duplicateCounter: (id) =>
         set((state) => {
+          const { duplication } = useSettingsShop.getState();
           const idx = state.counters.findIndex((c) => c.id === id);
           if (idx === -1) return {};
           const source = state.counters[idx];
           const duplicate: Counter = {
             ...source,
             id: uuid(),
-            history: [{ type: HistoryCreation, timestamp: Date.now() }],
+            history: duplication.copyHistory
+              ? [...source.history]
+              : [{ type: HistoryCreation, timestamp: Date.now() }],
           };
           const counters = [...state.counters];
-          counters.splice(idx + 1, 0, duplicate);
+          if (duplication.insertAfterOriginal) {
+            counters.splice(idx + 1, 0, duplicate);
+          } else {
+            const lastGroupIdx = counters
+              .map((c, i) => (c.groupId === source.groupId ? i : -1))
+              .filter((i) => i !== -1)
+              .pop()!;
+            counters.splice(lastGroupIdx + 1, 0, duplicate);
+          }
           return { counters };
         }),
 
