@@ -27,7 +27,6 @@ export default function ActionsPopup({
   const [popupHeight, setPopupHeight] = useState(0);
 
   const SCREEN_HEIGHT = Dimensions.get('window').height;
-
   const showAbove = position.y > SCREEN_HEIGHT * 0.6;
 
   return (
@@ -43,8 +42,8 @@ export default function ActionsPopup({
           style={{
             position: 'absolute',
             top: showAbove
-              ? position.y - 8
-              : position.y + position.height + popupHeight + 8,
+              ? position.y - popupHeight - 8
+              : position.y + position.height + 8,
             right: 16,
             opacity: popupHeight > 0 ? 1 : 0,
           }}
