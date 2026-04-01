@@ -192,7 +192,11 @@ export default function Index() {
               <Text className='text-zinc-400 text-center mt-8'>
                 No counters matching &quot;{searchQuery}&quot;
               </Text>
-            ) : null
+            ) : (
+              <Text className='text-zinc-400 text-center mt-8'>
+                Tap + to add your first counter
+              </Text>
+            )
           }
         />
 
