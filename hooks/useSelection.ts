@@ -9,7 +9,7 @@ export function useSelection() {
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
   const selecting = selectedIds.size > 0;
-  const deleteCounter = useCounterShop((state) => state.deleteCounter);
+  const deleteCounters = useCounterShop((state) => state.deleteCounters);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -27,7 +27,7 @@ export function useSelection() {
   };
 
   const handleDeleteSelected = () => {
-    selectedIds.forEach((id) => deleteCounter(id));
+    deleteCounters(selectedIds);
     clearSelection();
     setConfirmDeleteVisible(false);
   };
