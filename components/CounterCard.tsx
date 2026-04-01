@@ -2,7 +2,7 @@ import { useCounterShop } from '@/shop/counterShop';
 import { DefaultColor, isLightColor } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Haptics from 'expo-haptics';
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { SharedValue } from 'react-native-reanimated';
 import { useReorderableDrag } from 'react-native-reorderable-list';
@@ -41,6 +41,32 @@ export default function CounterCard({
   const increment = useCounterShop((state) => state.increment);
 
   const justLongPressed = useRef(false);
+  const repeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startRepeat = useCallback(
+    (amount: number) => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+      increment(counterId, amount);
+      const delay = setTimeout(() => {
+        repeatTimer.current = setInterval(() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+          increment(counterId, amount);
+        }, 80);
+      }, 400);
+      repeatTimer.current = delay as unknown as ReturnType<typeof setInterval>;
+    },
+    [counterId, increment],
+  );
+
+  const stopRepeat = useCallback(() => {
+    if (repeatTimer.current !== null) {
+      clearTimeout(
+        repeatTimer.current as unknown as ReturnType<typeof setTimeout>,
+      );
+      clearInterval(repeatTimer.current);
+      repeatTimer.current = null;
+    }
+  }, []);
 
   if (!counter) return null;
 
@@ -130,10 +156,8 @@ export default function CounterCard({
           activeOpacity={0.7}
           style={{ backgroundColor: btnBg }}
           className='h-14 w-14 rounded-full items-center justify-center'
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
-            return increment(counter.id, -counter.settings.decrementBy);
-          }}
+          onPressIn={() => startRepeat(-counter.settings.decrementBy)}
+          onPressOut={stopRepeat}
         >
           <MaterialIcons name='remove' size={28} color={textColor} />
         </TouchableOpacity>
@@ -142,7 +166,10 @@ export default function CounterCard({
           style={{
             color: textColor,
             fontVariant: ['tabular-nums'],
-            width: Math.min(180, Math.max(80, `${Math.abs(counter.count)}`.length * 18)),
+            width: Math.min(
+              180,
+              Math.max(80, `${Math.abs(counter.count)}`.length * 18),
+            ),
           }}
           numberOfLines={1}
           adjustsFontSizeToFit
@@ -155,10 +182,8 @@ export default function CounterCard({
           activeOpacity={0.7}
           style={{ backgroundColor: btnBg }}
           className='h-14 w-14 rounded-full items-center justify-center'
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
-            return increment(counter.id, counter.settings.incrementBy);
-          }}
+          onPressIn={() => startRepeat(counter.settings.incrementBy)}
+          onPressOut={stopRepeat}
         >
           <MaterialIcons name='add' size={28} color={textColor} />
         </TouchableOpacity>
