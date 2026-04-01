@@ -81,6 +81,7 @@ export default function CounterCard({
       return;
     }
     if (selecting) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onSelect?.();
     } else {
       onEdit();
@@ -100,11 +101,13 @@ export default function CounterCard({
             ? undefined
             : () => {
                 justLongPressed.current = true;
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 onSelect?.();
               }
       }
       onPressOut={() => {
         if (reorderable && didMove && !didMove.value) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           onSelect?.();
         }
         if (didMove) didMove.value = true;
