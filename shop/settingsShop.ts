@@ -1,3 +1,4 @@
+import { SortDirection, SortField } from '@/vibes/definitions';
 import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -22,10 +23,15 @@ interface SettingsState {
     insertAfterOriginal: boolean;
     copyHistory: boolean;
   };
+  sort: {
+    field: SortField;
+    direction: SortDirection;
+  };
 
   updateDuplicationSettings: (
     updates: Partial<SettingsState['duplication']>,
   ) => void;
+  updateSortSettings: (updates: Partial<SettingsState['sort']>) => void;
 }
 
 export const useSettingsShop = create<SettingsState>()(
@@ -35,10 +41,18 @@ export const useSettingsShop = create<SettingsState>()(
         insertAfterOriginal: true,
         copyHistory: false,
       },
+      sort: {
+        field: 'manual',
+        direction: 'asc',
+      },
 
       updateDuplicationSettings: (updates) =>
         set((state) => ({
           duplication: { ...state.duplication, ...updates },
+        })),
+      updateSortSettings: (updates) =>
+        set((state) => ({
+          sort: { ...state.sort, ...updates },
         })),
     }),
     {
