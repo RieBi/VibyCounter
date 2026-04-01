@@ -1,11 +1,8 @@
 import { useCounterShop } from '@/shop/counterShop';
 import {
   Counter,
-  HistoryCreation,
+  HistoryAction,
   HistoryEntry,
-  HistoryIncrement,
-  HistoryReset,
-  HistorySettingsChange,
 } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useState } from 'react';
@@ -33,17 +30,17 @@ interface CounterHistoryModalProps {
 const DURATION = 250;
 
 const actionLabel: Record<number, string> = {
-  [HistoryCreation]: 'Created',
-  [HistoryIncrement]: 'Increment',
-  [HistoryReset]: 'Reset',
-  [HistorySettingsChange]: 'Settings changed',
+  [HistoryAction.Creation]: 'Created',
+  [HistoryAction.Increment]: 'Increment',
+  [HistoryAction.Reset]: 'Reset',
+  [HistoryAction.SettingsChange]: 'Settings changed',
 };
 
 const actionIcon: Record<number, keyof typeof MaterialIcons.glyphMap> = {
-  [HistoryCreation]: 'add-circle-outline',
-  [HistoryIncrement]: 'trending-up',
-  [HistoryReset]: 'restart-alt',
-  [HistorySettingsChange]: 'tune',
+  [HistoryAction.Creation]: 'add-circle-outline',
+  [HistoryAction.Increment]: 'trending-up',
+  [HistoryAction.Reset]: 'restart-alt',
+  [HistoryAction.SettingsChange]: 'tune',
 };
 
 function formatTimestamp(ts: number): string {
@@ -58,8 +55,8 @@ function formatTimestamp(ts: number): string {
 }
 
 function HistoryItem({ entry }: { entry: HistoryEntry }) {
-  const isIncrement = entry.type === HistoryIncrement && entry.details;
-  const isSettings = entry.type === HistorySettingsChange && entry.changes;
+  const isIncrement = entry.type === HistoryAction.Increment && entry.details;
+  const isSettings = entry.type === HistoryAction.SettingsChange && entry.changes;
 
   return (
     <View className='flex-row items-start py-3 px-2 border-b border-emerald-700/50'>

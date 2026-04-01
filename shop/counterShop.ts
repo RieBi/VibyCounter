@@ -2,10 +2,7 @@ import {
   Counter,
   DefaultGroup,
   Group,
-  HistoryCreation,
-  HistoryIncrement,
-  HistoryReset,
-  HistorySettingsChange,
+  HistoryAction,
 } from '@/vibes/definitions';
 import { useSettingsShop } from '@/shop/settingsShop';
 import 'react-native-get-random-values';
@@ -73,7 +70,7 @@ export const useCounterShop = create<CounterState>()(
               id: uuid(),
               label,
               count: 0,
-              history: [{ type: HistoryCreation, timestamp: Date.now() }],
+              history: [{ type: HistoryAction.Creation, timestamp: Date.now() }],
               groupId: groupId ?? DefaultGroup.id,
               settings: settings ?? {
                 defaultValue: 0,
@@ -167,7 +164,7 @@ export const useCounterShop = create<CounterState>()(
               updated.history = [
                 ...counter.history,
                 {
-                  type: HistorySettingsChange,
+                  type: HistoryAction.SettingsChange,
                   timestamp: Date.now(),
                   changes,
                 },
@@ -188,7 +185,7 @@ export const useCounterShop = create<CounterState>()(
                   history: [
                     ...counter.history,
                     {
-                      type: HistoryIncrement,
+                      type: HistoryAction.Increment,
                       timestamp: Date.now(),
                       details: {
                         incrementBy: amount,
@@ -211,7 +208,7 @@ export const useCounterShop = create<CounterState>()(
                   count: c.settings.defaultValue,
                   history: [
                     ...c.history,
-                    { type: HistoryReset, timestamp: Date.now() },
+                    { type: HistoryAction.Reset, timestamp: Date.now() },
                   ],
                 }
               : c,
@@ -239,7 +236,7 @@ export const useCounterShop = create<CounterState>()(
             id: uuid(),
             history: duplication.copyHistory
               ? [...source.history]
-              : [{ type: HistoryCreation, timestamp: Date.now() }],
+              : [{ type: HistoryAction.Creation, timestamp: Date.now() }],
           };
           const counters = [...state.counters];
           if (duplication.insertAfterOriginal) {
@@ -275,7 +272,7 @@ export const useCounterShop = create<CounterState>()(
             c.id === id
               ? {
                   ...c,
-                  history: [{ type: HistoryCreation, timestamp: Date.now() }],
+                  history: [{ type: HistoryAction.Creation, timestamp: Date.now() }],
                 }
               : c,
           ),

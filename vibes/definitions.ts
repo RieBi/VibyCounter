@@ -35,16 +35,15 @@ export const DefaultGroup: Group = {
 
 export const DefaultColor = '#0e7490';
 
-export const HistoryCreation = 1;
-export const HistoryIncrement = 2;
-export const HistoryReset = 3;
-export const HistorySettingsChange = 4;
+export const HistoryAction = {
+  Creation: 1,
+  Increment: 2,
+  Reset: 3,
+  SettingsChange: 4,
+} as const;
 
 export type HistoryAction =
-  | typeof HistoryCreation
-  | typeof HistoryIncrement
-  | typeof HistoryReset
-  | typeof HistorySettingsChange;
+  (typeof HistoryAction)[keyof typeof HistoryAction];
 
 export interface HistoryEntryChange {
   field: string;
@@ -68,7 +67,7 @@ export interface HistoryEntry {
 function isHistoryEntryIncrement(
   entry: HistoryEntry,
 ): entry is HistoryEntry & { details: HistoryEntryIncrement } {
-  return entry.type === 2;
+  return entry.type === HistoryAction.Increment;
 }
 
 export const HistoryUtils = {
@@ -108,7 +107,7 @@ export function getLastActionTimestamp(counter: Counter): number {
 }
 
 export function getCreationTimestamp(counter: Counter): number {
-  const creation = counter.history.find((h) => h.type === HistoryCreation);
+  const creation = counter.history.find((h) => h.type === HistoryAction.Creation);
   return creation?.timestamp ?? 0;
 }
 
