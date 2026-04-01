@@ -94,7 +94,7 @@ export default function Index() {
   // --- Reordering ---
   const reorderCounters = useCounterShop((state) => state.reorderCounters);
   const duplicateCounter = useCounterShop((state) => state.duplicateCounter);
-  const didMoveCounter = useSharedValue(false);
+  const didMoveCounter = useSharedValue(true);
   const reorderable = searchQuery.trim() === '' && isManualOrder && !selecting;
 
   const handleCounterReorder = useCallback(
