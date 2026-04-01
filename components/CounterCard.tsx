@@ -125,7 +125,7 @@ export default function CounterCard({
         )}
       </View>
 
-      <View className='flex-row items-center justify-center gap-8 pt-1 pb-3'>
+      <View className='flex-row items-center justify-center pt-1 pb-3'>
         <TouchableOpacity
           activeOpacity={0.7}
           style={{ backgroundColor: btnBg }}
@@ -139,10 +139,16 @@ export default function CounterCard({
         </TouchableOpacity>
 
         <Text
-          style={{ color: textColor, minWidth: 60 }}
-          className='text-4xl font-bold text-center'
+          style={{
+            color: textColor,
+            fontVariant: ['tabular-nums'],
+            width: Math.min(180, Math.max(80, `${Math.abs(counter.count)}`.length * 18)),
+          }}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          className='text-4xl font-bold text-center mx-4'
         >
-          {counter.count}
+          {counter.count.toLocaleString()}
         </Text>
 
         <TouchableOpacity
