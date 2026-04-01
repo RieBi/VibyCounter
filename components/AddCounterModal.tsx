@@ -1,7 +1,6 @@
 import { useCounterShop } from '@/shop/counterShop';
 import { DefaultColor } from '@/vibes/definitions';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useState } from 'react';
 import {
   Keyboard,
@@ -12,9 +11,8 @@ import {
   View,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import ColorPickerBar from './reusable/ColorPickerBar';
+import CounterAppearanceFields from './reusable/CounterAppearanceFields';
 import CounterSettingsFields from './reusable/CounterSettingsFields';
-import IconPickerModal from './reusable/IconPickerModal';
 import ValidationToast from './reusable/ValidationToast';
 import VibyInput from './reusable/VibyInput';
 
@@ -33,7 +31,6 @@ export default function AddCounterModal({
   const [decrementBy, setDecrementBy] = useState('1');
   const [color, setColor] = useState(DefaultColor);
   const [icon, setIcon] = useState<string | undefined>(undefined);
-  const [iconPickerVisible, setIconPickerVisible] = useState(false);
   const [subModalOpen, setSubModalOpen] = useState(false);
   const [validationMessage, setValidationMessage] = useState<string | null>(
     null,
@@ -76,17 +73,6 @@ export default function AddCounterModal({
     setValidationMessage(null);
   };
 
-  const openIconPicker = () => {
-    setSubModalOpen(true);
-    setIconPickerVisible(true);
-  };
-
-  const closeIconPicker = () => {
-    Keyboard.dismiss();
-    setIconPickerVisible(false);
-    setTimeout(() => setSubModalOpen(false), 300);
-  };
-
   return (
     <View className='flex-1 justify-center items-center'>
       <TouchableOpacity
@@ -122,50 +108,12 @@ export default function AddCounterModal({
                 <Text className='text-white text-2xl font-bold mb-4'>
                   New Counter
                 </Text>
-                <ColorPickerBar
-                  selected={color}
-                  onSelect={setColor}
-                  onCustomModalChange={(open) => {
-                    if (open) setSubModalOpen(true);
-                    else setTimeout(() => setSubModalOpen(false), 300);
-                  }}
-                />
-
-                <Text className='text-emerald-300 text-sm mb-1 ml-1'>Icon</Text>
-                <TouchableOpacity
-                  className='flex-row items-center gap-3 bg-emerald-900 p-4 rounded-xl border border-lime-600 mb-4'
-                  onPress={openIconPicker}
-                >
-                  {icon ? (
-                    <MaterialIcons
-                      name={icon as keyof typeof MaterialIcons.glyphMap}
-                      size={24}
-                      color='white'
-                    />
-                  ) : (
-                    <MaterialIcons
-                      name='add-circle-outline'
-                      size={24}
-                      color='#6ee7b7'
-                    />
-                  )}
-                  <Text className={icon ? 'text-white' : 'text-emerald-300'}>
-                    {icon ?? 'Choose an icon'}
-                  </Text>
-                </TouchableOpacity>
-
-                <IconPickerModal
-                  visible={iconPickerVisible}
-                  selected={icon}
-                  onSelect={(i) => {
-                    setIcon(i);
-                    closeIconPicker();
-                  }}
-                  onClear={() => {
-                    setIcon(undefined);
-                    closeIconPicker();
-                  }}
-                  onClose={closeIconPicker}
+                <CounterAppearanceFields
+                  color={color}
+                  onColorChange={setColor}
+                  icon={icon}
+                  onIconChange={setIcon}
+                  onSubModalChange={setSubModalOpen}
                 />
 
                 <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
