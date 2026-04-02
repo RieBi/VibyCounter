@@ -120,6 +120,10 @@ export default function Index() {
     [didMoveCounter],
   );
 
+  // --- Empty group prompt ---
+  const [emptyGroupId, setEmptyGroupId] = useState<string | null>(null);
+  const deleteGroup = useCounterShop((state) => state.deleteGroup);
+
   // --- Actions popup ---
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionsId, setActionsId] = useState<string | null>(null);
@@ -228,10 +232,25 @@ export default function Index() {
         <MoveToGroupModal
           counterIds={moveIds}
           visible={moveIds.length > 0}
+          sourceGroupId={selectedGroupId}
+          onGroupEmptied={setEmptyGroupId}
           onClose={() => {
             setMoveIds([]);
             clearSelection();
           }}
+        />
+        <ConfirmModal
+          visible={!!emptyGroupId}
+          title='Delete Empty Group'
+          message='This group has no counters left. Delete it?'
+          onConfirm={() => {
+            if (emptyGroupId) {
+              deleteGroup(emptyGroupId);
+              setSelectedGroupId(DefaultGroup.id);
+            }
+            setEmptyGroupId(null);
+          }}
+          onCancel={() => setEmptyGroupId(null)}
         />
         <ConfirmModal
           visible={confirmDeleteVisible}

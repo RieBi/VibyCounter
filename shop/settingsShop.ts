@@ -27,11 +27,15 @@ interface SettingsState {
     field: SortField;
     direction: SortDirection;
   };
+  groups: {
+    confirmDeleteEmpty: boolean;
+  };
 
   updateDuplicationSettings: (
     updates: Partial<SettingsState['duplication']>,
   ) => void;
   updateSortSettings: (updates: Partial<SettingsState['sort']>) => void;
+  updateGroupSettings: (updates: Partial<SettingsState['groups']>) => void;
 }
 
 export const useSettingsShop = create<SettingsState>()(
@@ -50,9 +54,17 @@ export const useSettingsShop = create<SettingsState>()(
         set((state) => ({
           duplication: { ...state.duplication, ...updates },
         })),
+      groups: {
+        confirmDeleteEmpty: true,
+      },
+
       updateSortSettings: (updates) =>
         set((state) => ({
           sort: { ...state.sort, ...updates },
+        })),
+      updateGroupSettings: (updates) =>
+        set((state) => ({
+          groups: { ...state.groups, ...updates },
         })),
     }),
     {

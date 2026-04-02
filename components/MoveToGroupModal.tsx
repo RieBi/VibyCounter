@@ -1,4 +1,6 @@
 import { useCounterShop } from '@/shop/counterShop';
+import { useSettingsShop } from '@/shop/settingsShop';
+import { DefaultGroup } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useState } from 'react';
 import {
@@ -17,12 +19,16 @@ interface MoveToGroupModalProps {
   counterIds: string[];
   visible: boolean;
   onClose: () => void;
+  sourceGroupId: string;
+  onGroupEmptied?: (groupId: string) => void;
 }
 
 export default function MoveToGroupModal({
   counterIds,
   visible,
   onClose,
+  sourceGroupId,
+  onGroupEmptied,
 }: MoveToGroupModalProps) {
   const [search, setSearch] = useState('');
 
@@ -38,8 +44,20 @@ export default function MoveToGroupModal({
 
   const insets = useSafeAreaInsets();
 
-  const handleMove = (groupId: string) => {
-    counterIds.forEach((id) => updateCounter(id, { groupId }));
+  const handleMove = (targetGroupId: string) => {
+    counterIds.forEach((id) => updateCounter(id, { groupId: targetGroupId }));
+
+    if (
+      sourceGroupId !== DefaultGroup.id &&
+      useSettingsShop.getState().groups.confirmDeleteEmpty
+    ) {
+      const counters = useCounterShop.getState().counters;
+      const remaining = counters.filter((c) => c.groupId === sourceGroupId);
+      if (remaining.length === 0) {
+        onGroupEmptied?.(sourceGroupId);
+      }
+    }
+
     setSearch('');
     onClose();
   };
