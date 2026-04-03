@@ -1,6 +1,6 @@
 import ActionsPopup from '@/components/ActionsPopup';
 import AddCounterModal from '@/components/AddCounterModal';
-import CounterCard from '@/components/CounterCard';
+import SwipeableCounterCard from '@/components/SwipeableCounterCard';
 import EditCounterModal from '@/components/EditCounterModal';
 import GroupDrawer from '@/components/GroupDrawer';
 import IndexHeader from '@/components/IndexHeader';
@@ -124,6 +124,18 @@ export default function Index() {
   const [emptyGroupId, setEmptyGroupId] = useState<string | null>(null);
   const deleteGroup = useCounterShop((state) => state.deleteGroup);
 
+  // --- Swipe actions ---
+  const [swipeDeleteId, setSwipeDeleteId] = useState<string | null>(null);
+  const deleteCounter = useCounterShop((state) => state.deleteCounter);
+  const handleSwipeDelete = useCallback(
+    (id: string) => setSwipeDeleteId(id),
+    [],
+  );
+  const handleSwipeMove = useCallback(
+    (id: string) => setMoveIds([id]),
+    [setMoveIds],
+  );
+
   // --- Actions popup ---
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionsId, setActionsId] = useState<string | null>(null);
@@ -137,10 +149,10 @@ export default function Index() {
   // --- Render counter item ---
   const renderCounter = useCallback(
     ({ item }: { item: Counter }) => (
-      <CounterCard
+      <SwipeableCounterCard
         counterId={item.id}
         onEdit={() => setEditingId(item.id)}
-        onActions={(id, pos) => {
+        onActions={(id: string, pos: { x: number; y: number; width: number; height: number }) => {
           setActionsId(id);
           setActionsPos(pos);
         }}
@@ -149,9 +161,14 @@ export default function Index() {
         selecting={selecting}
         onSelect={() => toggleSelect(item.id)}
         didMove={didMoveCounter}
+        onSwipeDelete={handleSwipeDelete}
+        onSwipeMove={handleSwipeMove}
+        swipeEnabled={!selecting}
+        pendingSwipeAction={swipeDeleteId === item.id || moveIds.includes(item.id)}
       />
     ),
-    [reorderable, selectedIds, selecting, didMoveCounter, toggleSelect],
+    [reorderable, selectedIds, selecting, didMoveCounter, toggleSelect,
+     handleSwipeDelete, handleSwipeMove, swipeDeleteId, moveIds],
   );
 
   return (
@@ -228,6 +245,16 @@ export default function Index() {
             setActionsId(null);
           }}
           onClose={() => setActionsId(null)}
+        />
+        <ConfirmModal
+          visible={!!swipeDeleteId}
+          title='Delete Counter'
+          message='Delete this counter? This cannot be undone.'
+          onConfirm={() => {
+            if (swipeDeleteId) deleteCounter(swipeDeleteId);
+            setSwipeDeleteId(null);
+          }}
+          onCancel={() => setSwipeDeleteId(null)}
         />
         <MoveToGroupModal
           counterIds={moveIds}
