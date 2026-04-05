@@ -6,11 +6,12 @@ import GroupDrawer from '@/components/GroupDrawer';
 import IndexHeader from '@/components/IndexHeader';
 import MoveToGroupModal from '@/components/MoveToGroupModal';
 import ConfirmModal from '@/components/reusable/ConfirmModal';
+import UndoToast from '@/components/reusable/UndoToast';
 import SortModal from '@/components/SortModal';
 import { useSearch } from '@/hooks/useSearch';
 import { useSelection } from '@/hooks/useSelection';
 import { useSort } from '@/hooks/useSort';
-import { useCounterShop } from '@/shop/counterShop';
+import { PendingDelete, useCounterShop } from '@/shop/counterShop';
 import { Counter, DefaultGroup, sortCounters } from '@/vibes/definitions';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -23,6 +24,17 @@ import ReorderableList, {
 } from 'react-native-reorderable-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
+
+function getUndoMessage(pd: PendingDelete): string {
+  switch (pd.type) {
+    case 'counter':
+      return `"${pd.deletedCounters[0]?.label}" deleted`;
+    case 'counters':
+      return `${pd.deletedCounters.length} counters deleted`;
+    case 'group':
+      return `Group "${pd.deletedGroup?.name}" deleted`;
+  }
+}
 
 export default function Index() {
   const insets = useSafeAreaInsets();
@@ -122,11 +134,16 @@ export default function Index() {
 
   // --- Empty group prompt ---
   const [emptyGroupId, setEmptyGroupId] = useState<string | null>(null);
-  const deleteGroup = useCounterShop((state) => state.deleteGroup);
+
+  // --- Undo ---
+  const pendingDelete = useCounterShop((state) => state.pendingDelete);
+  const softDeleteCounter = useCounterShop((state) => state.softDeleteCounter);
+  const softDeleteGroup = useCounterShop((state) => state.softDeleteGroup);
+  const undoDelete = useCounterShop((state) => state.undoDelete);
+  const commitDelete = useCounterShop((state) => state.commitDelete);
 
   // --- Swipe actions ---
   const [swipeDeleteId, setSwipeDeleteId] = useState<string | null>(null);
-  const deleteCounter = useCounterShop((state) => state.deleteCounter);
   const handleSwipeDelete = useCallback(
     (id: string) => setSwipeDeleteId(id),
     [],
@@ -249,9 +266,9 @@ export default function Index() {
         <ConfirmModal
           visible={!!swipeDeleteId}
           title='Delete Counter'
-          message='Delete this counter? This cannot be undone.'
+          message='Delete this counter?'
           onConfirm={() => {
-            if (swipeDeleteId) deleteCounter(swipeDeleteId);
+            if (swipeDeleteId) softDeleteCounter(swipeDeleteId);
             setSwipeDeleteId(null);
           }}
           onCancel={() => setSwipeDeleteId(null)}
@@ -272,7 +289,7 @@ export default function Index() {
           message='This group has no counters left. Delete it?'
           onConfirm={() => {
             if (emptyGroupId) {
-              deleteGroup(emptyGroupId);
+              softDeleteGroup(emptyGroupId);
               setSelectedGroupId(DefaultGroup.id);
             }
             setEmptyGroupId(null);
@@ -282,7 +299,7 @@ export default function Index() {
         <ConfirmModal
           visible={confirmDeleteVisible}
           title='Delete Counters'
-          message={`Are you sure you want to delete ${selectedIds.size} counter${selectedIds.size > 1 ? 's' : ''}? This cannot be undone.`}
+          message={`Are you sure you want to delete ${selectedIds.size} counter${selectedIds.size > 1 ? 's' : ''}?`}
           onConfirm={handleDeleteSelected}
           onCancel={() => setConfirmDeleteVisible(false)}
         />
@@ -303,6 +320,13 @@ export default function Index() {
           selectedGroupId={selectedGroupId}
           onSelectGroup={setSelectedGroupId}
           onClose={() => setDrawerVisible(false)}
+        />
+
+        {/* === Undo Toast (above everything) === */}
+        <UndoToast
+          message={pendingDelete ? getUndoMessage(pendingDelete) : null}
+          onUndo={undoDelete}
+          onDismiss={commitDelete}
         />
       </View>
     </View>

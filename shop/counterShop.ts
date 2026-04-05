@@ -26,9 +26,20 @@ const zustandStorage = {
   },
 };
 
+export interface PendingDelete {
+  type: 'counter' | 'counters' | 'group';
+  deletedCounters: Counter[];
+  counterPositions: [string, number][];
+  deletedGroup?: Group;
+  groupPosition?: number;
+  reassignedCounterIds?: string[];
+  originalGroupId?: string;
+}
+
 interface CounterState {
   counters: Counter[];
   groups: Group[];
+  pendingDelete: PendingDelete | null;
 
   addCounter: (
     label: string,
@@ -41,6 +52,11 @@ interface CounterState {
   resetCounter: (id: string) => void;
   deleteCounter: (id: string) => void;
   deleteCounters: (ids: Set<string>) => void;
+  softDeleteCounter: (id: string) => void;
+  softDeleteCounters: (ids: Set<string>) => void;
+  softDeleteGroup: (id: string) => void;
+  undoDelete: () => void;
+  commitDelete: () => void;
   duplicateCounter: (id: string) => void;
   reorderCounters: (groupId: string, orderedIds: string[]) => void;
   clearHistory: (id: string) => void;
@@ -53,9 +69,10 @@ interface CounterState {
 
 export const useCounterShop = create<CounterState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       counters: [],
       groups: [DefaultGroup],
+      pendingDelete: null as PendingDelete | null,
 
       addCounter: (
         label: string,
@@ -225,6 +242,116 @@ export const useCounterShop = create<CounterState>()(
           counters: state.counters.filter((c) => !ids.has(c.id)),
         })),
 
+      softDeleteCounter: (id) => {
+        if (get().pendingDelete) set({ pendingDelete: null });
+        set((state) => {
+          const idx = state.counters.findIndex((c) => c.id === id);
+          if (idx === -1) return {};
+          return {
+            pendingDelete: {
+              type: 'counter',
+              deletedCounters: [{ ...state.counters[idx] }],
+              counterPositions: [[id, idx]],
+            },
+            counters: state.counters.filter((c) => c.id !== id),
+          };
+        });
+      },
+
+      softDeleteCounters: (ids) => {
+        if (get().pendingDelete) set({ pendingDelete: null });
+        set((state) => {
+          const positions: [string, number][] = [];
+          const deleted: Counter[] = [];
+          state.counters.forEach((c, i) => {
+            if (ids.has(c.id)) {
+              positions.push([c.id, i]);
+              deleted.push({ ...c });
+            }
+          });
+          if (deleted.length === 0) return {};
+          return {
+            pendingDelete: {
+              type: 'counters',
+              deletedCounters: deleted,
+              counterPositions: positions,
+            },
+            counters: state.counters.filter((c) => !ids.has(c.id)),
+          };
+        });
+      },
+
+      softDeleteGroup: (id) => {
+        if (get().pendingDelete) set({ pendingDelete: null });
+        set((state) => {
+          const groupIdx = state.groups.findIndex((g) => g.id === id);
+          if (groupIdx === -1) return {};
+          const group = state.groups[groupIdx];
+          const reassignedIds = state.counters
+            .filter((c) => c.groupId === id)
+            .map((c) => c.id);
+          return {
+            pendingDelete: {
+              type: 'group',
+              deletedCounters: [],
+              counterPositions: [],
+              deletedGroup: { ...group },
+              groupPosition: groupIdx,
+              reassignedCounterIds: reassignedIds,
+              originalGroupId: id,
+            },
+            groups: state.groups.filter((g) => g.id !== id),
+            counters: state.counters.map((c) =>
+              c.groupId === id ? { ...c, groupId: DefaultGroup.id } : c,
+            ),
+          };
+        });
+      },
+
+      undoDelete: () =>
+        set((state) => {
+          const pd = state.pendingDelete;
+          if (!pd) return {};
+
+          if (pd.type === 'group') {
+            const groups = [...state.groups];
+            if (pd.deletedGroup) {
+              const insertAt = Math.min(pd.groupPosition ?? groups.length, groups.length);
+              groups.splice(insertAt, 0, pd.deletedGroup);
+            }
+            const reassignedSet = new Set(pd.reassignedCounterIds);
+            return {
+              pendingDelete: null,
+              groups,
+              counters: pd.originalGroupId
+                ? state.counters.map((c) =>
+                    reassignedSet.has(c.id)
+                      ? { ...c, groupId: pd.originalGroupId! }
+                      : c,
+                  )
+                : state.counters,
+            };
+          }
+
+          // counter or counters
+          const counters = [...state.counters];
+          const toRestore = [...pd.deletedCounters]
+            .map((c) => ({
+              counter: c,
+              index: pd.counterPositions.find(([cid]) => cid === c.id)?.[1] ?? counters.length,
+            }))
+            .sort((a, b) => a.index - b.index);
+
+          for (const { counter, index } of toRestore) {
+            const insertAt = Math.min(index, counters.length);
+            counters.splice(insertAt, 0, counter);
+          }
+
+          return { pendingDelete: null, counters };
+        }),
+
+      commitDelete: () => set({ pendingDelete: null }),
+
       duplicateCounter: (id) =>
         set((state) => {
           const { duplication } = useSettingsShop.getState();
@@ -317,6 +444,10 @@ export const useCounterShop = create<CounterState>()(
     {
       name: 'counter-storage',
       storage: createJSONStorage(() => zustandStorage),
+      partialize: (state) => ({
+        counters: state.counters,
+        groups: state.groups,
+      }),
     },
   ),
 );

@@ -9,7 +9,7 @@ export function useSelection() {
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
 
   const selecting = selectedIds.size > 0;
-  const deleteCounters = useCounterShop((state) => state.deleteCounters);
+  const softDeleteCounters = useCounterShop((state) => state.softDeleteCounters);
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -27,7 +27,7 @@ export function useSelection() {
   };
 
   const handleDeleteSelected = () => {
-    deleteCounters(selectedIds);
+    softDeleteCounters(selectedIds);
     clearSelection();
     setConfirmDeleteVisible(false);
   };

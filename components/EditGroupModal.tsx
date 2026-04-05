@@ -33,7 +33,7 @@ export default function EditGroupModal({
     state.groups.find((g) => g.id === groupId),
   );
   const updateGroup = useCounterShop((state) => state.updateGroup);
-  const deleteGroup = useCounterShop((state) => state.deleteGroup);
+  const softDeleteGroup = useCounterShop((state) => state.softDeleteGroup);
   const groups = useCounterShop((state) => state.groups);
 
   const isDefault = groupId === groups[0]?.id;
@@ -53,7 +53,7 @@ export default function EditGroupModal({
 
   const handleDelete = () => {
     if (!groupId) return;
-    deleteGroup(groupId);
+    softDeleteGroup(groupId);
     setConfirmDeleteVisible(false);
     onDeleted(groupId);
     onClose();

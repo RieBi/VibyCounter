@@ -28,7 +28,7 @@ export default function EditCounterModal({
   onClose,
 }: EditCounterModalProps) {
   const updateCounter = useCounterShop((state) => state.updateCounter);
-  const deleteCounter = useCounterShop((state) => state.deleteCounter);
+  const softDeleteCounter = useCounterShop((state) => state.softDeleteCounter);
   const resetCounter = useCounterShop((state) => state.resetCounter);
 
   const [historyVisible, setHistoryVisible] = useState(false);
@@ -94,7 +94,7 @@ export default function EditCounterModal({
       return;
     }
 
-    deleteCounter(counterId);
+    softDeleteCounter(counterId);
     setConfirmDeleteVisible(false);
     onClose();
   };
@@ -223,7 +223,7 @@ export default function EditCounterModal({
       <ConfirmModal
         visible={confirmDeleteVisible}
         title='Delete Counter'
-        message={`Are you sure you want to delete counter "${counterToEdit?.label}"? This cannot be undone.`}
+        message={`Are you sure you want to delete counter "${counterToEdit?.label}"?`}
         onConfirm={handleDelete}
         onCancel={() => setConfirmDeleteVisible(false)}
       />
