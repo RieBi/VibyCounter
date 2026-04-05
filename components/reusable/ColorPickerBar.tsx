@@ -4,6 +4,12 @@ import { useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import CustomColorModal from './CustomColorModal';
 
+function randomColor(): string {
+  const ch = () =>
+    (Math.floor(Math.random() * 200) + 30).toString(16).padStart(2, '0');
+  return `#${ch()}${ch()}${ch()}`;
+}
+
 const PRESETS = [
   '#0e7490',
   '#0d9488',
@@ -58,6 +64,13 @@ export default function ColorPickerBar({
           )}
         </TouchableOpacity>
       ))}
+
+      <TouchableOpacity
+        onPress={() => onSelect(randomColor())}
+        className='h-8 w-8 rounded-full items-center justify-center border-2 border-dashed border-emerald-400'
+      >
+        <MaterialIcons name='casino' size={16} color='#6ee7b7' />
+      </TouchableOpacity>
 
       <TouchableOpacity
         onPress={openCustom}
