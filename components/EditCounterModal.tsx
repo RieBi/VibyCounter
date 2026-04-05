@@ -80,8 +80,8 @@ export default function EditCounterModal({
       return;
     }
 
-    const parsedMin = minEnabled ? (Number(minValue) || 0) : undefined;
-    const parsedMax = maxEnabled ? (Number(maxValue) || 0) : undefined;
+    const parsedMin = minEnabled ? Number(minValue) || 0 : undefined;
+    const parsedMax = maxEnabled ? Number(maxValue) || 0 : undefined;
     const parsedCurrent = Number(currentValue) || 0;
     const parsedDefault = Number(defaultValue) || 0;
 
@@ -113,7 +113,6 @@ export default function EditCounterModal({
         defaultValue: parsedDefault,
         incrementBy: Number(incrementBy) || 1,
         decrementBy: Number(decrementBy) || 1,
-        allowNegative: counterToEdit?.settings.allowNegative ?? false,
         minValue: parsedMin,
         maxValue: parsedMax,
       },

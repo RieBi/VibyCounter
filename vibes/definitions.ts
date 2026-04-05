@@ -7,7 +7,6 @@ export interface Counter {
     defaultValue: number;
     incrementBy: number;
     decrementBy: number;
-    allowNegative: boolean;
     minValue?: number;
     maxValue?: number;
   };
@@ -44,8 +43,7 @@ export const HistoryAction = {
   SettingsChange: 4,
 } as const;
 
-export type HistoryAction =
-  (typeof HistoryAction)[keyof typeof HistoryAction];
+export type HistoryAction = (typeof HistoryAction)[keyof typeof HistoryAction];
 
 export interface HistoryEntryChange {
   field: string;
@@ -75,7 +73,6 @@ function isHistoryEntryIncrement(
 export const HistoryUtils = {
   isHistoryEntryIncrement,
 };
-
 
 export function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '');
@@ -109,7 +106,9 @@ export function getLastActionTimestamp(counter: Counter): number {
 }
 
 export function getCreationTimestamp(counter: Counter): number {
-  const creation = counter.history.find((h) => h.type === HistoryAction.Creation);
+  const creation = counter.history.find(
+    (h) => h.type === HistoryAction.Creation,
+  );
   return creation?.timestamp ?? 0;
 }
 

@@ -48,8 +48,8 @@ export default function AddCounterModal({
       return;
     }
 
-    const parsedMin = minEnabled ? (Number(minValue) || 0) : undefined;
-    const parsedMax = maxEnabled ? (Number(maxValue) || 0) : undefined;
+    const parsedMin = minEnabled ? Number(minValue) || 0 : undefined;
+    const parsedMax = maxEnabled ? Number(maxValue) || 0 : undefined;
     const parsedDefault = Number(defaultValue) || 0;
 
     if (parsedMin != null && parsedMax != null && parsedMin > parsedMax) {
@@ -72,7 +72,6 @@ export default function AddCounterModal({
         defaultValue: parsedDefault,
         incrementBy: Number(incrementBy) || 1,
         decrementBy: Number(decrementBy) || 1,
-        allowNegative: false,
         minValue: parsedMin,
         maxValue: parsedMax,
       },

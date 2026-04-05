@@ -1,10 +1,10 @@
+import { useSettingsShop } from '@/shop/settingsShop';
 import {
   Counter,
   DefaultGroup,
   Group,
   HistoryAction,
 } from '@/vibes/definitions';
-import { useSettingsShop } from '@/shop/settingsShop';
 import 'react-native-get-random-values';
 import { createMMKV } from 'react-native-mmkv';
 import { v4 as uuid } from 'uuid';
@@ -87,13 +87,14 @@ export const useCounterShop = create<CounterState>()(
               id: uuid(),
               label,
               count: 0,
-              history: [{ type: HistoryAction.Creation, timestamp: Date.now() }],
+              history: [
+                { type: HistoryAction.Creation, timestamp: Date.now() },
+              ],
               groupId: groupId ?? DefaultGroup.id,
               settings: settings ?? {
                 defaultValue: 0,
                 incrementBy: 1,
                 decrementBy: 1,
-                allowNegative: false,
               },
               styling: styling,
             },
@@ -332,7 +333,10 @@ export const useCounterShop = create<CounterState>()(
           if (pd.type === 'group') {
             const groups = [...state.groups];
             if (pd.deletedGroup) {
-              const insertAt = Math.min(pd.groupPosition ?? groups.length, groups.length);
+              const insertAt = Math.min(
+                pd.groupPosition ?? groups.length,
+                groups.length,
+              );
               groups.splice(insertAt, 0, pd.deletedGroup);
             }
             const reassignedSet = new Set(pd.reassignedCounterIds);
@@ -354,7 +358,9 @@ export const useCounterShop = create<CounterState>()(
           const toRestore = [...pd.deletedCounters]
             .map((c) => ({
               counter: c,
-              index: pd.counterPositions.find(([cid]) => cid === c.id)?.[1] ?? counters.length,
+              index:
+                pd.counterPositions.find(([cid]) => cid === c.id)?.[1] ??
+                counters.length,
             }))
             .sort((a, b) => a.index - b.index);
 
@@ -415,7 +421,9 @@ export const useCounterShop = create<CounterState>()(
             c.id === id
               ? {
                   ...c,
-                  history: [{ type: HistoryAction.Creation, timestamp: Date.now() }],
+                  history: [
+                    { type: HistoryAction.Creation, timestamp: Date.now() },
+                  ],
                 }
               : c,
           ),
