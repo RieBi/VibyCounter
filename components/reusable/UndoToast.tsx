@@ -1,11 +1,21 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
+  Easing,
   runOnJS,
+  useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import Svg, { Circle } from 'react-native-svg';
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
+const CIRCLE_SIZE = 22;
+const STROKE_WIDTH = 2.5;
+const RADIUS = (CIRCLE_SIZE - STROKE_WIDTH) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 interface UndoToastProps {
   message: string | null;
@@ -22,6 +32,7 @@ export default function UndoToast({
 }: UndoToastProps) {
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(20);
+  const progress = useSharedValue(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isVisible = useRef(false);
 
@@ -44,10 +55,14 @@ export default function UndoToast({
 
   useEffect(() => {
     if (message) {
-      // Show / reset
       clearTimer();
       opacity.value = withTiming(1, { duration: 200 });
       translateY.value = withTiming(0, { duration: 200 });
+      progress.value = 0;
+      progress.value = withTiming(1, {
+        duration,
+        easing: Easing.linear,
+      });
       isVisible.current = true;
 
       timer.current = setTimeout(() => {
@@ -68,6 +83,7 @@ export default function UndoToast({
     animateOut,
     opacity,
     translateY,
+    progress,
   ]);
 
   useEffect(() => clearTimer, [clearTimer]);
@@ -83,6 +99,10 @@ export default function UndoToast({
     transform: [{ translateY: translateY.value }],
   }));
 
+  const circleProps = useAnimatedProps(() => ({
+    strokeDashoffset: CIRCUMFERENCE * (1 - progress.value),
+  }));
+
   if (!message) return null;
 
   return (
@@ -95,7 +115,32 @@ export default function UndoToast({
         style={style}
         className='bg-zinc-800 px-4 py-3 rounded-xl flex-row items-center justify-between shadow-lg'
       >
-        <Text className='text-white text-sm flex-1 mr-3' numberOfLines={1}>
+        <Svg
+          width={CIRCLE_SIZE}
+          height={CIRCLE_SIZE}
+          style={{ transform: [{ rotate: '-90deg' }] }}
+        >
+          <Circle
+            cx={CIRCLE_SIZE / 2}
+            cy={CIRCLE_SIZE / 2}
+            r={RADIUS}
+            stroke='rgba(255,255,255,0.2)'
+            strokeWidth={STROKE_WIDTH}
+            fill='none'
+          />
+          <AnimatedCircle
+            cx={CIRCLE_SIZE / 2}
+            cy={CIRCLE_SIZE / 2}
+            r={RADIUS}
+            stroke='#22d3ee'
+            strokeWidth={STROKE_WIDTH}
+            fill='none'
+            strokeDasharray={CIRCUMFERENCE}
+            strokeLinecap='round'
+            animatedProps={circleProps}
+          />
+        </Svg>
+        <Text className='text-white text-sm flex-1 mr-3 ml-3' numberOfLines={1}>
           {message}
         </Text>
         <TouchableOpacity onPress={handleUndo} hitSlop={8}>
