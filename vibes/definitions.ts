@@ -8,6 +8,8 @@ export interface Counter {
     incrementBy: number;
     decrementBy: number;
     allowNegative: boolean;
+    minValue?: number;
+    maxValue?: number;
   };
   styling: {
     color: string;

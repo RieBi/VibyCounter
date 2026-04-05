@@ -164,6 +164,18 @@ export const useCounterShop = create<CounterState>()(
                   from: String(s.decrementBy),
                   to: String(u.decrementBy),
                 });
+              if (u.minValue !== s.minValue)
+                changes.push({
+                  field: 'Min value',
+                  from: s.minValue != null ? String(s.minValue) : 'off',
+                  to: u.minValue != null ? String(u.minValue) : 'off',
+                });
+              if (u.maxValue !== s.maxValue)
+                changes.push({
+                  field: 'Max value',
+                  from: s.maxValue != null ? String(s.maxValue) : 'off',
+                  to: u.maxValue != null ? String(u.maxValue) : 'off',
+                });
             }
 
             const updated = {
@@ -194,26 +206,30 @@ export const useCounterShop = create<CounterState>()(
 
       increment: (id, amount) =>
         set((state) => ({
-          counters: state.counters.map((counter) =>
-            counter.id === id
-              ? {
-                  ...counter,
-                  count: counter.count + amount,
-                  history: [
-                    ...counter.history,
-                    {
-                      type: HistoryAction.Increment,
-                      timestamp: Date.now(),
-                      details: {
-                        incrementBy: amount,
-                        valueBefore: counter.count,
-                        valueAfter: counter.count + amount,
-                      },
-                    },
-                  ],
-                }
-              : counter,
-          ),
+          counters: state.counters.map((counter) => {
+            if (counter.id !== id) return counter;
+            let newValue = counter.count + amount;
+            if (counter.settings.minValue != null)
+              newValue = Math.max(newValue, counter.settings.minValue);
+            if (counter.settings.maxValue != null)
+              newValue = Math.min(newValue, counter.settings.maxValue);
+            return {
+              ...counter,
+              count: newValue,
+              history: [
+                ...counter.history,
+                {
+                  type: HistoryAction.Increment,
+                  timestamp: Date.now(),
+                  details: {
+                    incrementBy: amount,
+                    valueBefore: counter.count,
+                    valueAfter: newValue,
+                  },
+                },
+              ],
+            };
+          }),
         })),
 
       resetCounter: (id) =>

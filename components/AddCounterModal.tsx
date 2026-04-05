@@ -35,6 +35,10 @@ export default function AddCounterModal({
   const [validationMessage, setValidationMessage] = useState<string | null>(
     null,
   );
+  const [minEnabled, setMinEnabled] = useState(false);
+  const [maxEnabled, setMaxEnabled] = useState(false);
+  const [minValue, setMinValue] = useState('0');
+  const [maxValue, setMaxValue] = useState('100');
 
   const addCounter = useCounterShop((state) => state.addCounter);
 
@@ -44,14 +48,33 @@ export default function AddCounterModal({
       return;
     }
 
+    const parsedMin = minEnabled ? (Number(minValue) || 0) : undefined;
+    const parsedMax = maxEnabled ? (Number(maxValue) || 0) : undefined;
+    const parsedDefault = Number(defaultValue) || 0;
+
+    if (parsedMin != null && parsedMax != null && parsedMin > parsedMax) {
+      setValidationMessage('Min value cannot be greater than max value');
+      return;
+    }
+    if (parsedMin != null && parsedDefault < parsedMin) {
+      setValidationMessage('Default value is below minimum');
+      return;
+    }
+    if (parsedMax != null && parsedDefault > parsedMax) {
+      setValidationMessage('Default value is above maximum');
+      return;
+    }
+
     addCounter(
       label,
       selectedGroupId,
       {
-        defaultValue: Number(defaultValue) || 0,
+        defaultValue: parsedDefault,
         incrementBy: Number(incrementBy) || 1,
         decrementBy: Number(decrementBy) || 1,
         allowNegative: false,
+        minValue: parsedMin,
+        maxValue: parsedMax,
       },
       {
         color,
@@ -71,6 +94,10 @@ export default function AddCounterModal({
     setColor(DefaultColor);
     setIcon(undefined);
     setValidationMessage(null);
+    setMinEnabled(false);
+    setMaxEnabled(false);
+    setMinValue('0');
+    setMaxValue('100');
   };
 
   return (
@@ -132,6 +159,14 @@ export default function AddCounterModal({
                   onChangeDefault={setDefaultValue}
                   onChangeIncrement={setIncrementBy}
                   onChangeDecrement={setDecrementBy}
+                  minEnabled={minEnabled}
+                  minValue={minValue}
+                  onMinEnabledChange={setMinEnabled}
+                  onMinValueChange={setMinValue}
+                  maxEnabled={maxEnabled}
+                  maxValue={maxValue}
+                  onMaxEnabledChange={setMaxEnabled}
+                  onMaxValueChange={setMaxValue}
                 />
                 <View className='flex-row justify-end gap-3'>
                   <TouchableOpacity

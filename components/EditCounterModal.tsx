@@ -46,6 +46,10 @@ export default function EditCounterModal({
   const [validationMessage, setValidationMessage] = useState<string | null>(
     null,
   );
+  const [minEnabled, setMinEnabled] = useState(false);
+  const [maxEnabled, setMaxEnabled] = useState(false);
+  const [minValue, setMinValue] = useState('0');
+  const [maxValue, setMaxValue] = useState('100');
 
   const counterToEdit = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
@@ -60,6 +64,10 @@ export default function EditCounterModal({
       setDecrementBy(String(counterToEdit.settings.decrementBy ?? 1));
       setColor(counterToEdit.styling.color ?? DefaultColor);
       setIcon(counterToEdit.styling.icon);
+      setMinEnabled(counterToEdit.settings.minValue != null);
+      setMinValue(String(counterToEdit.settings.minValue ?? 0));
+      setMaxEnabled(counterToEdit.settings.maxValue != null);
+      setMaxValue(String(counterToEdit.settings.maxValue ?? 100));
       setValidationMessage(null);
     }
   }, [counterToEdit]);
@@ -72,14 +80,42 @@ export default function EditCounterModal({
       return;
     }
 
+    const parsedMin = minEnabled ? (Number(minValue) || 0) : undefined;
+    const parsedMax = maxEnabled ? (Number(maxValue) || 0) : undefined;
+    const parsedCurrent = Number(currentValue) || 0;
+    const parsedDefault = Number(defaultValue) || 0;
+
+    if (parsedMin != null && parsedMax != null && parsedMin > parsedMax) {
+      setValidationMessage('Min value cannot be greater than max value');
+      return;
+    }
+    if (parsedMin != null && parsedCurrent < parsedMin) {
+      setValidationMessage('Current value is below minimum');
+      return;
+    }
+    if (parsedMax != null && parsedCurrent > parsedMax) {
+      setValidationMessage('Current value is above maximum');
+      return;
+    }
+    if (parsedMin != null && parsedDefault < parsedMin) {
+      setValidationMessage('Default value is below minimum');
+      return;
+    }
+    if (parsedMax != null && parsedDefault > parsedMax) {
+      setValidationMessage('Default value is above maximum');
+      return;
+    }
+
     updateCounter(counterId, {
       label,
-      count: Number(currentValue) || 0,
+      count: parsedCurrent,
       settings: {
-        defaultValue: Number(defaultValue) || 0,
+        defaultValue: parsedDefault,
         incrementBy: Number(incrementBy) || 1,
         decrementBy: Number(decrementBy) || 1,
         allowNegative: counterToEdit?.settings.allowNegative ?? false,
+        minValue: parsedMin,
+        maxValue: parsedMax,
       },
       styling: {
         color: color,
@@ -186,6 +222,14 @@ export default function EditCounterModal({
                 onChangeDefault={setDefaultValue}
                 onChangeIncrement={setIncrementBy}
                 onChangeDecrement={setDecrementBy}
+                minEnabled={minEnabled}
+                minValue={minValue}
+                onMinEnabledChange={setMinEnabled}
+                onMinValueChange={setMinValue}
+                maxEnabled={maxEnabled}
+                maxValue={maxValue}
+                onMaxEnabledChange={setMaxEnabled}
+                onMaxValueChange={setMaxValue}
               />
               <TouchableOpacity
                 className='mb-4 self-start'
