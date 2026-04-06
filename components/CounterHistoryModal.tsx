@@ -136,6 +136,7 @@ export default function CounterHistoryModal({
       <Animated.View
         style={backdropStyle}
         className='absolute inset-0 bg-black/60'
+        
       >
         <Pressable className='flex-1' onPress={onClose} />
       </Animated.View>
