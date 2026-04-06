@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-redeclare */
 export interface Counter {
   id: string;
   groupId: string;
