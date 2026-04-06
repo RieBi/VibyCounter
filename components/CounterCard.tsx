@@ -1,5 +1,10 @@
 import { useCounterShop } from '@/shop/counterShop';
-import { DefaultColor, isLightColor } from '@/vibes/definitions';
+import {
+  DefaultColor,
+  getProgress,
+  hexToRgb,
+  isLightColor,
+} from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useRef } from 'react';
@@ -74,6 +79,10 @@ export default function CounterCard({
   const light = isLightColor(color);
   const textColor = light ? '#18181b' : '#fafafa';
   const btnBg = light ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)';
+
+  // Green hue range (~80–160) — completion bar would be invisible on green cards
+  const [cr, cg, cb] = hexToRgb(color);
+  const isGreenish = cg > cr && cg > cb;
 
   const handlePress = () => {
     if (justLongPressed.current) {
@@ -165,21 +174,31 @@ export default function CounterCard({
           <MaterialIcons name='remove' size={28} color={textColor} />
         </TouchableOpacity>
 
-        <Text
-          style={{
-            color: textColor,
-            fontVariant: ['tabular-nums'],
-            width: Math.min(
-              180,
-              Math.max(80, `${Math.abs(counter.count)}`.length * 18),
-            ),
-          }}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          className='text-4xl font-bold text-center mx-4'
-        >
-          {counter.count.toLocaleString()}
-        </Text>
+        <View className='items-center mx-4'>
+          <Text
+            style={{
+              color: textColor,
+              fontVariant: ['tabular-nums'],
+              width: Math.min(
+                180,
+                Math.max(80, `${Math.abs(counter.count)}`.length * 18),
+              ),
+            }}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            className='text-4xl font-bold text-center'
+          >
+            {counter.count.toLocaleString()}
+          </Text>
+          {counter.settings.goal != null && (
+            <Text
+              style={{ color: textColor, opacity: 0.6 }}
+              className='text-xs'
+            >
+              / {counter.settings.goal.toLocaleString()}
+            </Text>
+          )}
+        </View>
 
         <TouchableOpacity
           activeOpacity={0.7}
@@ -191,6 +210,32 @@ export default function CounterCard({
           <MaterialIcons name='add' size={28} color={textColor} />
         </TouchableOpacity>
       </View>
+
+      {counter.settings.goal != null && (
+        <View
+          style={{ backgroundColor: btnBg }}
+          className='h-1 rounded-full overflow-hidden mb-1'
+        >
+          <View
+            style={{
+              width: `${getProgress(counter.count, counter.settings.defaultValue, counter.settings.goal) * 100}%`,
+              backgroundColor:
+                getProgress(
+                  counter.count,
+                  counter.settings.defaultValue,
+                  counter.settings.goal,
+                ) >= 1
+                  ? isGreenish
+                    ? '#ffffff'
+                    : '#22c55e'
+                  : light
+                    ? 'rgba(0,0,0,0.6)'
+                    : 'rgba(255,255,255,0.6)',
+            }}
+            className='h-full rounded-full'
+          />
+        </View>
+      )}
     </Pressable>
   );
 }

@@ -9,6 +9,7 @@ export interface Counter {
     decrementBy: number;
     minValue?: number;
     maxValue?: number;
+    goal?: number;
   };
   styling: {
     color: string;
@@ -73,6 +74,17 @@ function isHistoryEntryIncrement(
 export const HistoryUtils = {
   isHistoryEntryIncrement,
 };
+
+export function getProgress(
+  count: number,
+  defaultValue: number,
+  goal: number,
+): number {
+  const total = goal - defaultValue;
+  if (total === 0) return count === goal ? 1 : 0;
+  const progress = (count - defaultValue) / total;
+  return Math.min(Math.max(progress, 0), 1);
+}
 
 export function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace('#', '');

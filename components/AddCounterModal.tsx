@@ -39,6 +39,7 @@ export default function AddCounterModal({
   const [maxEnabled, setMaxEnabled] = useState(false);
   const [minValue, setMinValue] = useState('0');
   const [maxValue, setMaxValue] = useState('100');
+  const [goal, setGoal] = useState('');
 
   const addCounter = useCounterShop((state) => state.addCounter);
 
@@ -65,6 +66,18 @@ export default function AddCounterModal({
       return;
     }
 
+    const parsedGoal = goal.trim() === '' ? undefined : Number(goal);
+    if (parsedGoal != null) {
+      if (parsedMin != null && parsedGoal < parsedMin) {
+        setValidationMessage(`Goal must be at least ${parsedMin}`);
+        return;
+      }
+      if (parsedMax != null && parsedGoal > parsedMax) {
+        setValidationMessage(`Goal must be at most ${parsedMax}`);
+        return;
+      }
+    }
+
     addCounter(
       label,
       selectedGroupId,
@@ -74,6 +87,7 @@ export default function AddCounterModal({
         decrementBy: Number(decrementBy) || 1,
         minValue: parsedMin,
         maxValue: parsedMax,
+        goal: parsedGoal,
       },
       {
         color,
@@ -97,6 +111,7 @@ export default function AddCounterModal({
     setMaxEnabled(false);
     setMinValue('0');
     setMaxValue('100');
+    setGoal('');
   };
 
   return (
@@ -155,9 +170,11 @@ export default function AddCounterModal({
                   defaultValue={defaultValue}
                   incrementBy={incrementBy}
                   decrementBy={decrementBy}
+                  goal={goal}
                   onChangeDefault={setDefaultValue}
                   onChangeIncrement={setIncrementBy}
                   onChangeDecrement={setDecrementBy}
+                  onChangeGoal={setGoal}
                   minEnabled={minEnabled}
                   minValue={minValue}
                   onMinEnabledChange={setMinEnabled}

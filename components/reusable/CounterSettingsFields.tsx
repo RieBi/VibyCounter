@@ -8,6 +8,8 @@ interface CounterSettingsFieldsProps {
   onChangeDefault: (v: string) => void;
   onChangeIncrement: (v: string) => void;
   onChangeDecrement: (v: string) => void;
+  goal: string;
+  onChangeGoal: (v: string) => void;
   showDefault?: boolean;
   minEnabled: boolean;
   minValue: string;
@@ -26,6 +28,8 @@ export default function CounterSettingsFields({
   onChangeDefault,
   onChangeIncrement,
   onChangeDecrement,
+  goal,
+  onChangeGoal,
   showDefault = true,
   minEnabled,
   minValue,
@@ -45,6 +49,7 @@ export default function CounterSettingsFields({
           onChange={onChangeDefault}
         />
       )}
+      <Field label='Goal' value={goal} onChange={onChangeGoal} placeholder='No goal' />
       <View className='flex-row gap-3'>
         <View className='flex-1'>
           <Field
@@ -89,10 +94,12 @@ function Field({
   label,
   value,
   onChange,
+  placeholder,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  placeholder?: string;
 }) {
   return (
     <View>
@@ -102,7 +109,8 @@ function Field({
         keyboardType='numeric'
         value={value}
         onChangeText={onChange}
-        placeholderTextColor='azure'
+        placeholder={placeholder}
+        placeholderTextColor='#6b7280'
       />
     </View>
   );

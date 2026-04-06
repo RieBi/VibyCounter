@@ -50,6 +50,7 @@ export default function EditCounterModal({
   const [maxEnabled, setMaxEnabled] = useState(false);
   const [minValue, setMinValue] = useState('0');
   const [maxValue, setMaxValue] = useState('100');
+  const [goal, setGoal] = useState('');
 
   const counterToEdit = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
@@ -68,6 +69,11 @@ export default function EditCounterModal({
       setMinValue(String(counterToEdit.settings.minValue ?? 0));
       setMaxEnabled(counterToEdit.settings.maxValue != null);
       setMaxValue(String(counterToEdit.settings.maxValue ?? 100));
+      setGoal(
+        counterToEdit.settings.goal != null
+          ? String(counterToEdit.settings.goal)
+          : '',
+      );
       setValidationMessage(null);
     }
   }, [counterToEdit]);
@@ -106,6 +112,18 @@ export default function EditCounterModal({
       return;
     }
 
+    const parsedGoal = goal.trim() === '' ? undefined : Number(goal);
+    if (parsedGoal != null) {
+      if (parsedMin != null && parsedGoal < parsedMin) {
+        setValidationMessage(`Goal must be at least ${parsedMin}`);
+        return;
+      }
+      if (parsedMax != null && parsedGoal > parsedMax) {
+        setValidationMessage(`Goal must be at most ${parsedMax}`);
+        return;
+      }
+    }
+
     updateCounter(counterId, {
       label,
       count: parsedCurrent,
@@ -115,6 +133,7 @@ export default function EditCounterModal({
         decrementBy: Number(decrementBy) || 1,
         minValue: parsedMin,
         maxValue: parsedMax,
+        goal: parsedGoal,
       },
       styling: {
         color: color,
@@ -218,9 +237,11 @@ export default function EditCounterModal({
                 defaultValue={defaultValue}
                 incrementBy={incrementBy}
                 decrementBy={decrementBy}
+                goal={goal}
                 onChangeDefault={setDefaultValue}
                 onChangeIncrement={setIncrementBy}
                 onChangeDecrement={setDecrementBy}
+                onChangeGoal={setGoal}
                 minEnabled={minEnabled}
                 minValue={minValue}
                 onMinEnabledChange={setMinEnabled}

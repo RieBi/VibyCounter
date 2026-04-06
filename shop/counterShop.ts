@@ -177,6 +177,12 @@ export const useCounterShop = create<CounterState>()(
                   from: s.maxValue != null ? String(s.maxValue) : 'off',
                   to: u.maxValue != null ? String(u.maxValue) : 'off',
                 });
+              if (u.goal !== s.goal)
+                changes.push({
+                  field: 'Goal',
+                  from: s.goal != null ? String(s.goal) : 'none',
+                  to: u.goal != null ? String(u.goal) : 'none',
+                });
             }
 
             const updated = {
