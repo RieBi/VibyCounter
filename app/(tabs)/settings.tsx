@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ImportMode,
   VibyExportPayload,
@@ -81,6 +81,7 @@ function DuplicatePlacementRow({
 }
 
 export default function SettingsScreen() {
+  const insets = useSafeAreaInsets();
   const duplication = useSettingsShop((state) => state.duplication);
   const display = useSettingsShop((state) => state.display);
   const groups = useSettingsShop((state) => state.groups);
@@ -164,7 +165,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView className='flex-1 bg-white' edges={['top']}>
+    <View className='flex-1 bg-white' style={{ paddingTop: insets.top }}>
       <ScrollView className='flex-1 px-5' contentContainerStyle={{ paddingBottom: 32 }}>
         <Text className='text-2xl font-bold text-zinc-900 mt-3 mb-1'>Settings</Text>
         <Text className='text-zinc-500 mb-6'>
@@ -310,6 +311,6 @@ export default function SettingsScreen() {
         message={messageModal?.message ?? ''}
         onPrimary={() => setMessageModal(null)}
       />
-    </SafeAreaView>
+    </View>
   );
 }
