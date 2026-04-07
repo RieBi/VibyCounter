@@ -390,15 +390,19 @@ export function replaceAllHistoryEntries(records: HistoryExportRecord[]) {
   }
 }
 
+export type HistoryPageSortOrder = 'desc' | 'asc';
+
 export function getHistoryPage(
   counterId: string,
   opts: {
     limit: number;
     range?: HistoryRange;
     cursor?: HistoryCursor | null;
+    sortOrder?: HistoryPageSortOrder;
   },
 ): HistoryPage {
   const database = getDb();
+  const sortOrder = opts.sortOrder ?? 'desc';
   const whereParts = ['counter_id = ?'];
   const args: (string | number)[] = [counterId];
 
@@ -411,16 +415,23 @@ export function getHistoryPage(
     args.push(opts.range.endTs);
   }
   if (opts.cursor) {
-    whereParts.push('(ts < ? OR (ts = ? AND id < ?))');
+    if (sortOrder === 'desc') {
+      whereParts.push('(ts < ? OR (ts = ? AND id < ?))');
+    } else {
+      whereParts.push('(ts > ? OR (ts = ? AND id > ?))');
+    }
     args.push(opts.cursor.ts, opts.cursor.ts, opts.cursor.id);
   }
+
+  const orderSql =
+    sortOrder === 'desc' ? 'ORDER BY ts DESC, id DESC' : 'ORDER BY ts ASC, id ASC';
 
   const rows = database.getAllSync<DbHistoryRow>(
     `
       SELECT id, ts, action_type, value_before, value_after, delta, payload_json
       FROM counter_history
       WHERE ${whereParts.join(' AND ')}
-      ORDER BY ts DESC, id DESC
+      ${orderSql}
       LIMIT ?;
     `,
     [...args, opts.limit + 1],

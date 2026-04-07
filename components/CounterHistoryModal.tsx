@@ -3,6 +3,7 @@ import {
   getDailyCounts,
   getHistoryPage,
   HistoryCursor,
+  HistoryPageSortOrder,
   HistoryRange,
 } from '@/data/historyDb';
 import {
@@ -234,6 +235,8 @@ export default function CounterHistoryModal({
   const [granularity, setGranularity] = useState<Granularity>('day');
   const [customStart, setCustomStart] = useState<number | null>(null);
   const [customEnd, setCustomEnd] = useState<number | null>(null);
+  const [customSortOrder, setCustomSortOrder] =
+    useState<HistoryPageSortOrder>('desc');
   const [historyItems, setHistoryItems] = useState<HistoryEntry[]>([]);
   const [cursor, setCursor] = useState<HistoryCursor | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -261,6 +264,14 @@ export default function CounterHistoryModal({
     return getRangeFromPreset(preset);
   }, [mode, customStart, customEnd, preset]);
 
+  const historySortOrder = useMemo<HistoryPageSortOrder>(
+    () =>
+      mode === 'custom' && customStart != null && customEnd != null ?
+        customSortOrder
+      : 'desc',
+    [mode, customStart, customEnd, customSortOrder],
+  );
+
   const customBuckets = useMemo(
     () => buildBuckets(dailyCountsAll, granularity),
     [dailyCountsAll, granularity],
@@ -274,6 +285,7 @@ export default function CounterHistoryModal({
       limit: PAGE_SIZE,
       range: activeRange,
       cursor: reset ? null : nextCursor,
+      sortOrder: historySortOrder,
     });
 
     if (reset) {
@@ -309,7 +321,7 @@ export default function CounterHistoryModal({
     if (!visible || !counter) return;
     fetchHistoryPage(null, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, counter?.id, activeRange.startTs, activeRange.endTs]);
+  }, [visible, counter?.id, activeRange.startTs, activeRange.endTs, historySortOrder]);
 
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: backdropOpacity.value,
@@ -467,6 +479,30 @@ export default function CounterHistoryModal({
                   'Pick end period'
                 : `Selected: ${formatRangeLabel(Math.min(customStart, customEnd), Math.max(customStart, customEnd))}`}
               </Text>
+              {customStart != null && customEnd != null && (
+                <View className='flex-row gap-2 mt-3'>
+                  <TouchableOpacity
+                    onPress={() => setCustomSortOrder('desc')}
+                    className={`px-3 py-2 rounded-lg border ${customSortOrder === 'desc' ? 'bg-lime-500 border-lime-300' : 'bg-emerald-900 border-emerald-700'}`}
+                  >
+                    <Text
+                      className={`text-xs font-semibold ${customSortOrder === 'desc' ? 'text-emerald-950' : 'text-emerald-200'}`}
+                    >
+                      Newest first
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setCustomSortOrder('asc')}
+                    className={`px-3 py-2 rounded-lg border ${customSortOrder === 'asc' ? 'bg-lime-500 border-lime-300' : 'bg-emerald-900 border-emerald-700'}`}
+                  >
+                    <Text
+                      className={`text-xs font-semibold ${customSortOrder === 'asc' ? 'text-emerald-950' : 'text-emerald-200'}`}
+                    >
+                      Oldest first
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
               <View className='flex-row gap-2 mt-2'>
                 <TouchableOpacity
                   className='px-3 py-2 rounded-lg border border-emerald-600 bg-emerald-900'
