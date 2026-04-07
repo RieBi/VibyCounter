@@ -1,8 +1,10 @@
 import { useCounterShop } from '@/shop/counterShop';
 import { useSettingsShop } from '@/shop/settingsShop';
+import MessageModal from '@/components/reusable/MessageModal';
 import {
   ActivityIndicator,
-  Alert,
+  Modal,
+  Pressable,
   ScrollView,
   Switch,
   Text,
@@ -92,6 +94,14 @@ export default function SettingsScreen() {
   const buildAllExportPayload = useCounterShop((state) => state.buildAllExportPayload);
   const applyImportedPayload = useCounterShop((state) => state.applyImportedPayload);
   const [busy, setBusy] = useState(false);
+  const [pendingImport, setPendingImport] = useState<{
+    payload: VibyExportPayload;
+    previewLabel: string;
+  } | null>(null);
+  const [messageModal, setMessageModal] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   const importWithMode = async (
     payload: VibyExportPayload,
@@ -101,15 +111,16 @@ export default function SettingsScreen() {
     setBusy(true);
     try {
       const summary = applyImportedPayload(payload, mode);
-      Alert.alert(
-        'Import complete',
-        `${previewLabel}\n\nImported ${summary.groups} groups, ${summary.counters} counters, ${summary.historyEntries} history entries.`,
-      );
+      setMessageModal({
+        title: 'Import complete',
+        message: `${previewLabel}\n\nImported ${summary.groups} groups, ${summary.counters} counters, ${summary.historyEntries} history entries.`,
+      });
     } catch (error) {
-      Alert.alert(
-        'Import failed',
-        error instanceof Error ? error.message : 'Unable to import selected file.',
-      );
+      setMessageModal({
+        title: 'Import failed',
+        message:
+          error instanceof Error ? error.message : 'Unable to import selected file.',
+      });
     } finally {
       setBusy(false);
     }
@@ -127,29 +138,13 @@ export default function SettingsScreen() {
       const preview = getExportPreview(payload);
       const previewLabel = `Scope: ${payload.scope}\nGroups: ${preview.groups}\nCounters: ${preview.counters}\nHistory entries: ${preview.historyEntries}`;
       setBusy(false);
-
-      Alert.alert('Import data', `${previewLabel}\n\nChoose import behavior:`, [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Merge',
-          onPress: () => {
-            void importWithMode(payload, 'merge', previewLabel);
-          },
-        },
-        {
-          text: 'Replace target',
-          style: 'destructive',
-          onPress: () => {
-            void importWithMode(payload, 'replace', previewLabel);
-          },
-        },
-      ]);
+      setPendingImport({ payload, previewLabel });
     } catch (error) {
       setBusy(false);
-      Alert.alert(
-        'Import failed',
-        error instanceof Error ? error.message : 'Unable to read selected file.',
-      );
+      setMessageModal({
+        title: 'Import failed',
+        message: error instanceof Error ? error.message : 'Unable to read selected file.',
+      });
     }
   };
 
@@ -159,10 +154,10 @@ export default function SettingsScreen() {
       const payload = buildAllExportPayload();
       await shareExportPayload(payload);
     } catch (error) {
-      Alert.alert(
-        'Export failed',
-        error instanceof Error ? error.message : 'Unable to export app data.',
-      );
+      setMessageModal({
+        title: 'Export failed',
+        message: error instanceof Error ? error.message : 'Unable to export app data.',
+      });
     } finally {
       setBusy(false);
     }
@@ -242,6 +237,79 @@ export default function SettingsScreen() {
           )}
         </View>
       </ScrollView>
+      <Modal
+        animationType='fade'
+        transparent
+        visible={!!pendingImport}
+        onRequestClose={() => setPendingImport(null)}
+      >
+        <Pressable
+          className='flex-1 justify-center items-center bg-black/60 px-4'
+          onPress={() => setPendingImport(null)}
+        >
+          <Pressable className='w-full max-w-[460px]'>
+            <View className='bg-emerald-800 w-full p-6 rounded-2xl border border-emerald-700'>
+              <Text className='text-white text-xl font-bold mb-2'>Import data</Text>
+              <Text className='text-emerald-200 mb-4 whitespace-pre-line'>
+                {pendingImport?.previewLabel}
+              </Text>
+
+              <View className='bg-emerald-900/60 border border-emerald-700 rounded-xl p-3 mb-3'>
+                <Text className='text-lime-300 font-semibold'>Merge</Text>
+                <Text className='text-emerald-100 text-sm mt-1'>
+                  Keep your current data and add imported items. If IDs conflict, imported
+                  items are remapped so nothing gets overwritten.
+                </Text>
+              </View>
+
+              <View className='bg-rose-900/30 border border-rose-700 rounded-xl p-3 mb-6'>
+                <Text className='text-rose-300 font-semibold'>Replace target</Text>
+                <Text className='text-emerald-100 text-sm mt-1'>
+                  Overwrite the affected scope from the import file. Existing data in that
+                  scope is replaced.
+                </Text>
+              </View>
+
+              <View className='flex-row justify-end gap-3'>
+                <TouchableOpacity
+                  className='bg-emerald-700 p-3 px-5 rounded-xl'
+                  onPress={() => setPendingImport(null)}
+                >
+                  <Text className='text-white font-bold'>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className='bg-lime-600 p-3 px-5 rounded-xl'
+                  onPress={() => {
+                    if (!pendingImport) return;
+                    const next = pendingImport;
+                    setPendingImport(null);
+                    void importWithMode(next.payload, 'merge', next.previewLabel);
+                  }}
+                >
+                  <Text className='text-white font-bold'>Merge</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className='bg-rose-600 p-3 px-5 rounded-xl'
+                  onPress={() => {
+                    if (!pendingImport) return;
+                    const next = pendingImport;
+                    setPendingImport(null);
+                    void importWithMode(next.payload, 'replace', next.previewLabel);
+                  }}
+                >
+                  <Text className='text-white font-bold'>Replace target</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+      <MessageModal
+        visible={!!messageModal}
+        title={messageModal?.title ?? ''}
+        message={messageModal?.message ?? ''}
+        onPrimary={() => setMessageModal(null)}
+      />
     </SafeAreaView>
   );
 }

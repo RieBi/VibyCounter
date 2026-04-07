@@ -6,6 +6,7 @@ import GroupDrawer from '@/components/GroupDrawer';
 import IndexHeader from '@/components/IndexHeader';
 import MoveToGroupModal from '@/components/MoveToGroupModal';
 import ConfirmModal from '@/components/reusable/ConfirmModal';
+import MessageModal from '@/components/reusable/MessageModal';
 import UndoToast from '@/components/reusable/UndoToast';
 import SortModal from '@/components/SortModal';
 import { useSearch } from '@/hooks/useSearch';
@@ -17,7 +18,7 @@ import { shareExportPayload } from '@/vibes/importExport';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Gesture } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import ReorderableList, {
@@ -168,6 +169,7 @@ export default function CountersScreen() {
     width: 0,
     height: 0,
   });
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // --- Render counter item ---
   const renderCounter = useCallback(
@@ -283,13 +285,18 @@ export default function CountersScreen() {
             try {
               await shareExportPayload(payload);
             } catch (error) {
-              Alert.alert(
-                'Export failed',
+              setErrorMessage(
                 error instanceof Error ? error.message : 'Unable to export counter.',
               );
             }
           }}
           onClose={() => setActionsId(null)}
+        />
+        <MessageModal
+          visible={!!errorMessage}
+          title='Export failed'
+          message={errorMessage ?? ''}
+          onPrimary={() => setErrorMessage(null)}
         />
         <ConfirmModal
           visible={!!swipeDeleteId}

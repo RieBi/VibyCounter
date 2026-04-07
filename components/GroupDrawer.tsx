@@ -4,7 +4,6 @@ import { Group } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   BackHandler,
   Dimensions,
   Keyboard,
@@ -28,6 +27,7 @@ import ReorderableList, {
 } from 'react-native-reorderable-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EditGroupModal from './EditGroupModal';
+import MessageModal from './reusable/MessageModal';
 import ValidationToast from './reusable/ValidationToast';
 import VibyInput from './reusable/VibyInput';
 
@@ -106,6 +106,7 @@ export default function GroupDrawer({
   const [validationMessage, setValidationMessage] = useState<string | null>(
     null,
   );
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const defaultGroup = groups[0];
   const customGroups = useMemo(() => groups.slice(1), [groups]);
@@ -347,8 +348,7 @@ export default function GroupDrawer({
               try {
                 await shareExportPayload(payload);
               } catch (error) {
-                Alert.alert(
-                  'Export failed',
+                setExportError(
                   error instanceof Error ? error.message : 'Unable to export group.',
                 );
               }
@@ -356,6 +356,12 @@ export default function GroupDrawer({
           />
         </Animated.View>
       </GestureDetector>
+      <MessageModal
+        visible={!!exportError}
+        title='Export failed'
+        message={exportError ?? ''}
+        onPrimary={() => setExportError(null)}
+      />
       <ValidationToast
         message={validationMessage}
         onDismiss={() => setValidationMessage(null)}
