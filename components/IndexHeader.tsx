@@ -3,7 +3,10 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { MutableRefObject } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import Animated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, {
+  SharedValue,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 
 import VibyInput from './reusable/VibyInput';
 
@@ -96,7 +99,10 @@ export default function IndexHeader({
                   color='#71717a'
                 />
               </TouchableOpacity>
-              <TouchableOpacity onPress={onDeleteSelected} hitSlop={iconHitSlop}>
+              <TouchableOpacity
+                onPress={onDeleteSelected}
+                hitSlop={iconHitSlop}
+              >
                 <MaterialIcons
                   name='delete-outline'
                   size={22}

@@ -67,12 +67,16 @@ export default function AddCounterModal({
 
   // Shrink the modal from the bottom as keyboard opens
   const containerStyle = useAnimatedStyle(() => ({
-    paddingBottom: insets.bottom - Math.min(0, keyboardHeight.value + insets.bottom),
+    paddingBottom:
+      insets.bottom - Math.min(0, keyboardHeight.value + insets.bottom),
   }));
 
   // Scroll container height: capped to available space, shrinks with keyboard
   const scrollContainerStyle = useAnimatedStyle(() => {
-    const keyboardIntrusion = Math.max(0, -(keyboardHeight.value + insets.bottom));
+    const keyboardIntrusion = Math.max(
+      0,
+      -(keyboardHeight.value + insets.bottom),
+    );
     const maxH =
       WINDOW_HEIGHT -
       insets.top -
@@ -187,7 +191,7 @@ export default function AddCounterModal({
   };
 
   return (
-    <View className='flex-1 justify-center items-center'>
+    <View className='justify-center items-center'>
       <TouchableOpacity
         activeOpacity={0.9}
         className='bg-green-600 p-3 rounded-full h-12 w-12 justify-center items-center shadow-md shadow-green-600/50'
@@ -209,13 +213,14 @@ export default function AddCounterModal({
           <View className='bg-emerald-800 rounded-2xl border border-emerald-700 overflow-hidden mx-3'>
             {/* Fixed header */}
             <View className='px-6 pt-6 pb-2'>
-              <Text className='text-white text-2xl font-bold'>
-                New Counter
-              </Text>
+              <Text className='text-white text-2xl font-bold'>New Counter</Text>
             </View>
 
             {/* Scrollable form fields */}
-            <Animated.View ref={scrollContainerRef} style={scrollContainerStyle}>
+            <Animated.View
+              ref={scrollContainerRef}
+              style={scrollContainerStyle}
+            >
               <ScrollView
                 ref={scrollRef}
                 style={{ flex: 1 }}

@@ -12,7 +12,7 @@ export default function RootLayout() {
   const keepScreenOn = useSettingsShop((s) => s.display.keepScreenOn);
 
   useEffect(() => {
-    if (!keepScreenOn) {
+    if (keepScreenOn) {
       activateKeepAwakeAsync(KEEP_AWAKE_TAG).catch(() => {});
       return;
     }
