@@ -1,5 +1,12 @@
 import { useSettingsShop } from '@/shop/settingsShop';
 import {
+  appendHistoryEntry,
+  clearHistoryEntries,
+  deleteHistoryForCounter,
+  deleteHistoryForCounters,
+  duplicateCounterHistory,
+} from '@/data/historyDb';
+import {
   Counter,
   DefaultGroup,
   Group,
@@ -79,17 +86,19 @@ export const useCounterShop = create<CounterState>()(
         groupId: string,
         settings: Counter['settings'],
         styling: Counter['styling'],
-      ) =>
+      ) => {
+        const now = Date.now();
+        const newId = uuid();
         set((state) => ({
           counters: [
             ...state.counters,
             {
-              id: uuid(),
+              id: newId,
               label,
               count: 0,
-              history: [
-                { type: HistoryAction.Creation, timestamp: Date.now() },
-              ],
+              createdAt: now,
+              lastActionAt: now,
+              historyCount: 1,
               groupId: groupId ?? DefaultGroup.id,
               settings: settings ?? {
                 defaultValue: 0,
@@ -99,7 +108,12 @@ export const useCounterShop = create<CounterState>()(
               styling: styling,
             },
           ],
-        })),
+        }));
+        appendHistoryEntry(newId, {
+          type: HistoryAction.Creation,
+          timestamp: now,
+        });
+      },
 
       updateCounter: (id, updates) =>
         set((state) => ({
@@ -197,14 +211,14 @@ export const useCounterShop = create<CounterState>()(
             };
 
             if (changes.length > 0) {
-              updated.history = [
-                ...counter.history,
-                {
-                  type: HistoryAction.SettingsChange,
-                  timestamp: Date.now(),
-                  changes,
-                },
-              ];
+              const now = Date.now();
+              updated.lastActionAt = now;
+              updated.historyCount = counter.historyCount + 1;
+              appendHistoryEntry(counter.id, {
+                type: HistoryAction.SettingsChange,
+                timestamp: now,
+                changes,
+              });
             }
 
             return updated;
@@ -220,50 +234,56 @@ export const useCounterShop = create<CounterState>()(
               newValue = Math.max(newValue, counter.settings.minValue);
             if (counter.settings.maxValue != null)
               newValue = Math.min(newValue, counter.settings.maxValue);
+            const now = Date.now();
+            appendHistoryEntry(counter.id, {
+              type: HistoryAction.Increment,
+              timestamp: now,
+              valueBefore: counter.count,
+              valueAfter: newValue,
+              delta: amount,
+            });
             return {
               ...counter,
               count: newValue,
-              history: [
-                ...counter.history,
-                {
-                  type: HistoryAction.Increment,
-                  timestamp: Date.now(),
-                  details: {
-                    incrementBy: amount,
-                    valueBefore: counter.count,
-                    valueAfter: newValue,
-                  },
-                },
-              ],
+              lastActionAt: now,
+              historyCount: counter.historyCount + 1,
             };
           }),
         })),
 
       resetCounter: (id) =>
         set((state) => ({
-          counters: state.counters.map((c) =>
-            c.id === id
-              ? {
-                  ...c,
-                  count: c.settings.defaultValue,
-                  history: [
-                    ...c.history,
-                    { type: HistoryAction.Reset, timestamp: Date.now() },
-                  ],
-                }
-              : c,
-          ),
+          counters: state.counters.map((c) => {
+            if (c.id !== id) return c;
+            const now = Date.now();
+            appendHistoryEntry(c.id, {
+              type: HistoryAction.Reset,
+              timestamp: now,
+            });
+            return {
+              ...c,
+              count: c.settings.defaultValue,
+              lastActionAt: now,
+              historyCount: c.historyCount + 1,
+            };
+          }),
         })),
 
       deleteCounter: (id) =>
-        set((state) => ({
-          counters: state.counters.filter((c) => c.id !== id),
-        })),
+        set((state) => {
+          deleteHistoryForCounter(id);
+          return {
+            counters: state.counters.filter((c) => c.id !== id),
+          };
+        }),
 
       deleteCounters: (ids) =>
-        set((state) => ({
-          counters: state.counters.filter((c) => !ids.has(c.id)),
-        })),
+        set((state) => {
+          deleteHistoryForCounters([...ids]);
+          return {
+            counters: state.counters.filter((c) => !ids.has(c.id)),
+          };
+        }),
 
       softDeleteCounter: (id) => {
         if (get().pendingDelete) set({ pendingDelete: null });
@@ -378,7 +398,14 @@ export const useCounterShop = create<CounterState>()(
           return { pendingDelete: null, counters };
         }),
 
-      commitDelete: () => set({ pendingDelete: null }),
+      commitDelete: () =>
+        set((state) => {
+          const pending = state.pendingDelete;
+          if (pending?.type === 'counter' || pending?.type === 'counters') {
+            deleteHistoryForCounters(pending.deletedCounters.map((c) => c.id));
+          }
+          return { pendingDelete: null };
+        }),
 
       duplicateCounter: (id) =>
         set((state) => {
@@ -386,13 +413,23 @@ export const useCounterShop = create<CounterState>()(
           const idx = state.counters.findIndex((c) => c.id === id);
           if (idx === -1) return {};
           const source = state.counters[idx];
+          const now = Date.now();
+          const duplicateId = uuid();
           const duplicate: Counter = {
             ...source,
-            id: uuid(),
-            history: duplication.copyHistory
-              ? [...source.history]
-              : [{ type: HistoryAction.Creation, timestamp: Date.now() }],
+            id: duplicateId,
+            createdAt: now,
+            lastActionAt: now,
+            historyCount: duplication.copyHistory ? source.historyCount : 1,
           };
+          if (duplication.copyHistory) {
+            duplicateCounterHistory(source.id, duplicateId);
+          } else {
+            appendHistoryEntry(duplicateId, {
+              type: HistoryAction.Creation,
+              timestamp: now,
+            });
+          }
           const counters = [...state.counters];
           if (duplication.insertAfterOriginal) {
             counters.splice(idx + 1, 0, duplicate);
@@ -423,22 +460,30 @@ export const useCounterShop = create<CounterState>()(
 
       clearHistory: (id) =>
         set((state) => ({
-          counters: state.counters.map((c) =>
-            c.id === id
-              ? {
-                  ...c,
-                  history: [
-                    { type: HistoryAction.Creation, timestamp: Date.now() },
-                  ],
-                }
-              : c,
-          ),
+          counters: state.counters.map((c) => {
+            if (c.id !== id) return c;
+            const now = Date.now();
+            clearHistoryEntries(id);
+            appendHistoryEntry(id, {
+              type: HistoryAction.Creation,
+              timestamp: now,
+            });
+            return {
+              ...c,
+              createdAt: now,
+              lastActionAt: now,
+              historyCount: 1,
+            };
+          }),
         })),
 
       deleteAll: () =>
-        set(() => ({
-          counters: [],
-        })),
+        set((state) => {
+          deleteHistoryForCounters(state.counters.map((c) => c.id));
+          return {
+            counters: [],
+          };
+        }),
 
       addGroup: (name, icon) =>
         set((state) => ({

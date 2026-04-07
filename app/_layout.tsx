@@ -1,4 +1,5 @@
 import { useSettingsShop } from '@/shop/settingsShop';
+import { initHistoryDb } from '@/data/historyDb';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Stack } from 'expo-router';
 import { useEffect } from 'react';
@@ -10,6 +11,10 @@ const KEEP_AWAKE_TAG = 'vibycounter-keep-screen-on-setting';
 
 export default function RootLayout() {
   const keepScreenOn = useSettingsShop((s) => s.display.keepScreenOn);
+
+  useEffect(() => {
+    initHistoryDb();
+  }, []);
 
   useEffect(() => {
     if (keepScreenOn) {

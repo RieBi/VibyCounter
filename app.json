@@ -31,7 +31,8 @@
           "image": "./assets/images/viby-splash.png",
           "imageWidth": 200
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,

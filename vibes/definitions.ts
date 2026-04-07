@@ -4,6 +4,9 @@ export interface Counter {
   groupId: string;
   label: string;
   count: number;
+  createdAt: number;
+  lastActionAt: number;
+  historyCount: number;
   settings: {
     defaultValue: number;
     incrementBy: number;
@@ -17,7 +20,6 @@ export interface Counter {
     icon?: string;
   };
 
-  history: HistoryEntry[];
 }
 
 export interface Group {
@@ -114,15 +116,11 @@ export type SortField = 'manual' | 'name' | 'value' | 'created' | 'lastAction';
 export type SortDirection = 'asc' | 'desc';
 
 export function getLastActionTimestamp(counter: Counter): number {
-  if (counter.history.length === 0) return 0;
-  return counter.history[counter.history.length - 1].timestamp;
+  return counter.lastActionAt;
 }
 
 export function getCreationTimestamp(counter: Counter): number {
-  const creation = counter.history.find(
-    (h) => h.type === HistoryAction.Creation,
-  );
-  return creation?.timestamp ?? 0;
+  return counter.createdAt;
 }
 
 export function sortCounters(

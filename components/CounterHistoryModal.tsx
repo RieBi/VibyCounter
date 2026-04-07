@@ -1,11 +1,17 @@
 import { useCounterShop } from '@/shop/counterShop';
 import {
+  getDailyCounts,
+  getHistoryPage,
+  HistoryCursor,
+  HistoryRange,
+} from '@/data/historyDb';
+import {
   Counter,
   HistoryAction,
   HistoryEntry,
 } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -54,6 +60,27 @@ function formatTimestamp(ts: number): string {
   });
 }
 
+type RangePreset = '7d' | '30d' | '90d' | 'all';
+
+const PAGE_SIZE = 80;
+
+function getRangeFromPreset(preset: RangePreset): HistoryRange {
+  if (preset === 'all') return {};
+
+  const now = Date.now();
+  const dayMs = 24 * 60 * 60 * 1000;
+  const days =
+    preset === '7d' ? 7
+    : preset === '30d' ? 30
+    : 90;
+  return { startTs: now - dayMs * days, endTs: now };
+}
+
+function formatDayLabel(dayKey: string): string {
+  const date = new Date(`${dayKey}T00:00:00.000Z`);
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 function HistoryItem({ entry }: { entry: HistoryEntry }) {
   const isIncrement = entry.type === HistoryAction.Increment && entry.details;
   const isSettings = entry.type === HistoryAction.SettingsChange && entry.changes;
@@ -98,12 +125,47 @@ export default function CounterHistoryModal({
 }: CounterHistoryModalProps) {
   const [mounted, setMounted] = useState(false);
   const [confirmClearVisible, setConfirmClearVisible] = useState(false);
+  const [preset, setPreset] = useState<RangePreset>('30d');
+  const [historyItems, setHistoryItems] = useState<HistoryEntry[]>([]);
+  const [cursor, setCursor] = useState<HistoryCursor | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [dailyCounts, setDailyCounts] = useState<{ dayKey: string; count: number }[]>(
+    [],
+  );
 
   const clearHistory = useCounterShop((state) => state.clearHistory);
   const insets = useSafeAreaInsets();
 
   const backdropOpacity = useSharedValue(0);
   const translateY = useSharedValue(1000);
+
+  const range = useMemo(() => getRangeFromPreset(preset), [preset]);
+
+  const hydrate = (opts?: { resetCursor?: boolean }) => {
+    if (!counter) return;
+    if (loading) return;
+
+    setLoading(true);
+    const page = getHistoryPage(counter.id, {
+      limit: PAGE_SIZE,
+      range,
+      cursor: opts?.resetCursor ? null : cursor,
+    });
+
+    if (opts?.resetCursor) {
+      setHistoryItems(page.items);
+    } else {
+      setHistoryItems((prev) => [...prev, ...page.items]);
+    }
+    setCursor(page.nextCursor);
+    setHasMore(page.hasMore);
+
+    if (opts?.resetCursor) {
+      setDailyCounts(getDailyCounts(counter.id, range));
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (visible) {
@@ -118,6 +180,12 @@ export default function CounterHistoryModal({
     }
   }, [visible, backdropOpacity, translateY]);
 
+  useEffect(() => {
+    if (!visible || !counter) return;
+    hydrate({ resetCursor: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [counter?.id, preset, visible]);
+
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: backdropOpacity.value,
   }));
@@ -125,8 +193,6 @@ export default function CounterHistoryModal({
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
-
-  const history = counter?.history ? [...counter.history].reverse() : [];
 
   if (!mounted) return null;
 
@@ -154,7 +220,7 @@ export default function CounterHistoryModal({
             History — {counter?.label}
           </Text>
           <View className='flex-row items-center gap-4'>
-            {history.length > 1 && (
+            {counter && counter.historyCount > 1 && (
               <TouchableOpacity onPress={() => setConfirmClearVisible(true)}>
                 <MaterialIcons name='delete-sweep' size={24} color='#f87171' />
               </TouchableOpacity>
@@ -165,10 +231,71 @@ export default function CounterHistoryModal({
           </View>
         </View>
 
+        <View className='px-4 pt-3 pb-2 border-b border-emerald-700/70'>
+          <View className='flex-row gap-2'>
+            {(['7d', '30d', '90d', 'all'] as RangePreset[]).map((p) => (
+              <TouchableOpacity
+                key={p}
+                onPress={() => setPreset(p)}
+                className={`px-3 py-2 rounded-lg border ${preset === p ? 'bg-emerald-500 border-emerald-300' : 'bg-emerald-900 border-emerald-700'}`}
+              >
+                <Text
+                  className={`text-xs font-semibold ${preset === p ? 'text-emerald-950' : 'text-emerald-200'}`}
+                >
+                  {p === 'all' ? 'All time' : p.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <Text className='text-emerald-200 text-xs mt-2'>
+            Showing {historyItems.length.toLocaleString()} entries
+            {counter ? ` of ${counter.historyCount.toLocaleString()}` : ''}
+          </Text>
+        </View>
+
+        <View className='px-4 pt-3 pb-2 border-b border-emerald-700/70'>
+          <Text className='text-emerald-200 text-sm font-semibold mb-2'>
+            Activity density by day
+          </Text>
+          <FlatList
+            horizontal
+            data={dailyCounts}
+            keyExtractor={(item) => item.dayKey}
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item }) => {
+              const maxCount = Math.max(1, ...dailyCounts.map((x) => x.count));
+              const ratio = item.count / maxCount;
+              const height = 8 + Math.round(ratio * 26);
+              return (
+                <View className='mr-2 items-center w-14'>
+                  <View
+                    className='w-7 rounded-t-md bg-lime-400'
+                    style={{ height, opacity: item.count === 0 ? 0.2 : 1 }}
+                  />
+                  <Text className='text-[10px] text-emerald-300 mt-1'>
+                    {formatDayLabel(item.dayKey)}
+                  </Text>
+                  <Text className='text-[10px] text-emerald-400'>
+                    {item.count}
+                  </Text>
+                </View>
+              );
+            }}
+            ListEmptyComponent={
+              <Text className='text-emerald-400 text-xs'>No entries in range</Text>
+            }
+          />
+        </View>
+
         <FlatList
-          data={history}
-          keyExtractor={(_, i) => i.toString()}
+          data={historyItems}
+          keyExtractor={(item, i) => `${item.timestamp}-${item.type}-${i}`}
           renderItem={({ item }) => <HistoryItem entry={item} />}
+          onEndReached={() => {
+            if (!hasMore || loading) return;
+            hydrate();
+          }}
+          onEndReachedThreshold={0.4}
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingBottom: insets.bottom,
@@ -177,6 +304,19 @@ export default function CounterHistoryModal({
             <Text className='text-emerald-400 text-center mt-8'>
               No history yet
             </Text>
+          }
+          ListFooterComponent={
+            hasMore ?
+              <TouchableOpacity
+                className='py-4 items-center'
+                onPress={() => hydrate()}
+                disabled={loading}
+              >
+                <Text className='text-lime-300 font-semibold'>
+                  {loading ? 'Loading...' : 'Load more'}
+                </Text>
+              </TouchableOpacity>
+            : null
           }
         />
       </Animated.View>
@@ -187,7 +327,10 @@ export default function CounterHistoryModal({
         message={`Are you sure you want to clear all history for "${counter?.label}"?`}
         confirmLabel='Clear'
         onConfirm={() => {
-          if (counter) clearHistory(counter.id);
+          if (counter) {
+            clearHistory(counter.id);
+            hydrate({ resetCursor: true });
+          }
           setConfirmClearVisible(false);
         }}
         onCancel={() => setConfirmClearVisible(false)}
