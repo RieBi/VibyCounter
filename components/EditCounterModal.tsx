@@ -2,7 +2,14 @@ import { useCounterShop } from '@/shop/counterShop';
 import { DefaultColor } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useRef, useState } from 'react';
-import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {
   useReanimatedFocusedInput,
   useReanimatedKeyboardAnimation,
@@ -63,7 +70,8 @@ export default function EditCounterModal({
 
   // Shrink the modal from the bottom as keyboard opens
   const containerStyle = useAnimatedStyle(() => ({
-    paddingBottom: insets.bottom - Math.min(0, keyboardHeight.value + insets.bottom),
+    paddingBottom:
+      insets.bottom - Math.min(0, keyboardHeight.value + insets.bottom),
   }));
 
   const scrollToFocusedInput = () => {
@@ -220,108 +228,116 @@ export default function EditCounterModal({
         className='flex-1 bg-black/60'
         style={[{ paddingTop: insets.top }, containerStyle]}
       >
-        <View className='flex-1 bg-emerald-800 rounded-2xl border border-emerald-700 overflow-hidden mx-3 my-1'>
-          {/* Fixed header */}
-          <View className='flex-row justify-between items-center px-6 pt-6 pb-2'>
-            <Text className='text-white text-2xl font-bold'>Edit Counter</Text>
-            <View className='flex-row gap-4'>
-              <TouchableOpacity
-                onPress={() => setConfirmDeleteVisible(true)}
-              >
-                <MaterialIcons
-                  color='#f87171'
-                  name='delete-outline'
-                  size={30}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setHistoryVisible(true)}>
-                <MaterialIcons color='#EBF4FA' name='history' size={32} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Scrollable form fields */}
-          <View ref={scrollContainerRef} style={{ flex: 1 }}>
-            <ScrollView
-              ref={scrollRef}
-              style={{ flex: 1 }}
-              contentContainerStyle={{ paddingHorizontal: 24 }}
-              keyboardShouldPersistTaps='handled'
-              onScroll={(e) => {
-                scrollOffset.current = e.nativeEvent.contentOffset.y;
-              }}
-              scrollEventThrottle={16}
-            >
-              <CounterAppearanceFields
-                color={color}
-                onColorChange={setColor}
-                icon={icon}
-                onIconChange={setIcon}
-                onSubModalChange={setSubModalOpen}
-              />
-
-              <Text className='text-emerald-300 text-md mb-1 ml-1'>Name</Text>
-              <VibyInput
-                className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
-                placeholder='Counter name'
-                placeholderTextColor='azure'
-                value={label}
-                onChangeText={setLabel}
-              />
-              <Text className='text-emerald-300 text-sm mb-1 ml-1'>
-                Current value
-              </Text>
-              <VibyInput
-                className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
-                keyboardType='numeric'
-                value={currentValue}
-                onChangeText={setCurrentValue}
-              />
-              <CounterSettingsFields
-                defaultValue={defaultValue}
-                incrementBy={incrementBy}
-                decrementBy={decrementBy}
-                goal={goal}
-                onChangeDefault={setDefaultValue}
-                onChangeIncrement={setIncrementBy}
-                onChangeDecrement={setDecrementBy}
-                onChangeGoal={setGoal}
-                minEnabled={minEnabled}
-                minValue={minValue}
-                onMinEnabledChange={setMinEnabled}
-                onMinValueChange={setMinValue}
-                maxEnabled={maxEnabled}
-                maxValue={maxValue}
-                onMaxEnabledChange={setMaxEnabled}
-                onMaxValueChange={setMaxValue}
-              />
-              <TouchableOpacity
-                className='mb-4 self-start'
-                onPress={() => setConfirmResetVisible(true)}
-              >
-                <Text className='text-rose-400 font-semibold'>
-                  Reset counter
+        <Pressable className='flex-1' onPress={onClose}>
+          <Pressable className='flex-1'>
+            <View className='flex-1 bg-emerald-800 rounded-2xl border border-emerald-700 overflow-hidden mx-3 my-1'>
+              {/* Fixed header */}
+              <View className='flex-row justify-between items-center px-6 pt-6 pb-2'>
+                <Text className='text-white text-2xl font-bold'>
+                  Edit Counter
                 </Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
+                <View className='flex-row gap-4'>
+                  <TouchableOpacity
+                    onPress={() => setConfirmDeleteVisible(true)}
+                  >
+                    <MaterialIcons
+                      color='#f87171'
+                      name='delete-outline'
+                      size={30}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setHistoryVisible(true)}>
+                    <MaterialIcons color='#EBF4FA' name='history' size={32} />
+                  </TouchableOpacity>
+                </View>
+              </View>
 
-          {/* Fixed footer */}
-          <View className='flex-row justify-end gap-3 px-6 py-3 border-t border-emerald-700 bg-emerald-800'>
-            <TouchableOpacity
-              className='bg-rose-600/60 p-3 px-6 rounded-xl'
-              onPress={() => onClose()}
-            >
-              <Text className='text-white font-bold'>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className='bg-lime-600 p-3 px-6 rounded-xl'
-              onPress={() => handleSave()}
-            >
-              <Text className='text-white font-bold'>Save</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+              {/* Scrollable form fields */}
+              <View ref={scrollContainerRef} style={{ flex: 1 }}>
+                <ScrollView
+                  ref={scrollRef}
+                  style={{ flex: 1 }}
+                  contentContainerStyle={{ paddingHorizontal: 24 }}
+                  keyboardShouldPersistTaps='handled'
+                  onScroll={(e) => {
+                    scrollOffset.current = e.nativeEvent.contentOffset.y;
+                  }}
+                  scrollEventThrottle={16}
+                >
+                  <CounterAppearanceFields
+                    color={color}
+                    onColorChange={setColor}
+                    icon={icon}
+                    onIconChange={setIcon}
+                    onSubModalChange={setSubModalOpen}
+                  />
+
+                  <Text className='text-emerald-300 text-md mb-1 ml-1'>
+                    Name
+                  </Text>
+                  <VibyInput
+                    className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
+                    placeholder='Counter name'
+                    placeholderTextColor='azure'
+                    value={label}
+                    onChangeText={setLabel}
+                  />
+                  <Text className='text-emerald-300 text-sm mb-1 ml-1'>
+                    Current value
+                  </Text>
+                  <VibyInput
+                    className='bg-emerald-900 text-white p-4 rounded-xl border border-lime-600 mb-6 text-lg'
+                    keyboardType='numeric'
+                    value={currentValue}
+                    onChangeText={setCurrentValue}
+                  />
+                  <CounterSettingsFields
+                    defaultValue={defaultValue}
+                    incrementBy={incrementBy}
+                    decrementBy={decrementBy}
+                    goal={goal}
+                    onChangeDefault={setDefaultValue}
+                    onChangeIncrement={setIncrementBy}
+                    onChangeDecrement={setDecrementBy}
+                    onChangeGoal={setGoal}
+                    minEnabled={minEnabled}
+                    minValue={minValue}
+                    onMinEnabledChange={setMinEnabled}
+                    onMinValueChange={setMinValue}
+                    maxEnabled={maxEnabled}
+                    maxValue={maxValue}
+                    onMaxEnabledChange={setMaxEnabled}
+                    onMaxValueChange={setMaxValue}
+                  />
+                  <TouchableOpacity
+                    className='mb-4 self-start'
+                    onPress={() => setConfirmResetVisible(true)}
+                  >
+                    <Text className='text-rose-400 font-semibold'>
+                      Reset counter
+                    </Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+
+              {/* Fixed footer */}
+              <View className='flex-row justify-end gap-3 px-6 py-3 border-t border-emerald-700 bg-emerald-800'>
+                <TouchableOpacity
+                  className='bg-rose-600/60 p-3 px-6 rounded-xl'
+                  onPress={() => onClose()}
+                >
+                  <Text className='text-white font-bold'>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className='bg-lime-600 p-3 px-6 rounded-xl'
+                  onPress={() => handleSave()}
+                >
+                  <Text className='text-white font-bold'>Save</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Pressable>
+        </Pressable>
       </Animated.View>
 
       <CounterHistoryModal

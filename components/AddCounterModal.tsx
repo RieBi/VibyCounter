@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import {
   Dimensions,
   Modal,
+  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -210,7 +211,9 @@ export default function AddCounterModal({
           className='flex-1 bg-black/60 justify-center'
           style={[{ paddingTop: insets.top }, containerStyle]}
         >
-          <View className='bg-emerald-800 rounded-2xl border border-emerald-700 overflow-hidden mx-3'>
+          <Pressable className='flex-1 justify-center' onPress={handleClose}>
+            <Pressable>
+              <View className='bg-emerald-800 rounded-2xl border border-emerald-700 overflow-hidden mx-3'>
             {/* Fixed header */}
             <View className='px-6 pt-6 pb-2'>
               <Text className='text-white text-2xl font-bold'>New Counter</Text>
@@ -292,7 +295,9 @@ export default function AddCounterModal({
                 <Text className='text-white font-bold'>Create</Text>
               </TouchableOpacity>
             </View>
-          </View>
+              </View>
+            </Pressable>
+          </Pressable>
         </Animated.View>
 
         <ValidationToast
