@@ -74,6 +74,11 @@ export default function CountersScreen() {
     setSortModalVisible,
   } = useSort();
 
+  const [selectionBulkMessage, setSelectionBulkMessage] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
+
   // --- Selection ---
   const {
     selectedIds,
@@ -86,7 +91,19 @@ export default function CountersScreen() {
     clearSelection,
     selectAll,
     handleDeleteSelected,
-  } = useSelection();
+  } = useSelection({
+    onBulkDeleteNoneUnlocked: () =>
+      setSelectionBulkMessage({
+        title: 'Cannot delete',
+        message:
+          'Selected counters are locked. Unlock them in the editor before deleting.',
+      }),
+    onBulkDeleteSkippedLocked: ({ deletedCount, skippedLocked }) =>
+      setSelectionBulkMessage({
+        title: 'Counters deleted',
+        message: `Deleted ${deletedCount} counter${deletedCount === 1 ? '' : 's'}. ${skippedLocked} locked counter${skippedLocked === 1 ? ' was' : 's were'} skipped.`,
+      }),
+  });
 
   // --- Counter list ---
   const counterObjects = useCounterShop(
@@ -191,7 +208,8 @@ export default function CountersScreen() {
         didMove={didMoveCounter}
         onSwipeDelete={handleSwipeDelete}
         onSwipeMove={handleSwipeMove}
-        swipeEnabled={!selecting}
+        locked={!!item.locked}
+        swipeEnabled={!selecting && !item.locked}
         pendingSwipeAction={swipeDeleteId === item.id || moveIds.includes(item.id)}
       />
     ),
@@ -297,6 +315,12 @@ export default function CountersScreen() {
           title='Export failed'
           message={errorMessage ?? ''}
           onPrimary={() => setErrorMessage(null)}
+        />
+        <MessageModal
+          visible={!!selectionBulkMessage}
+          title={selectionBulkMessage?.title ?? ''}
+          message={selectionBulkMessage?.message ?? ''}
+          onPrimary={() => setSelectionBulkMessage(null)}
         />
         <ConfirmModal
           visible={!!swipeDeleteId}

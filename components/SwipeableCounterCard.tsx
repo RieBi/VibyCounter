@@ -22,6 +22,7 @@ interface SwipeableCounterCardProps {
   onSwipeDelete: (id: string) => void;
   onSwipeMove: (id: string) => void;
   swipeEnabled: boolean;
+  locked?: boolean;
   pendingSwipeAction?: boolean;
 }
 
@@ -37,6 +38,7 @@ export default function SwipeableCounterCard({
   onSwipeDelete,
   onSwipeMove,
   swipeEnabled,
+  locked = false,
   pendingSwipeAction,
 }: SwipeableCounterCardProps) {
   const swipeableRef = useRef<SwipeableMethods>(null);
@@ -58,7 +60,7 @@ export default function SwipeableCounterCard({
     didMove,
   };
 
-  if (!swipeEnabled) {
+  if (!swipeEnabled || locked) {
     return <CounterCard {...counterCardProps} />;
   }
 

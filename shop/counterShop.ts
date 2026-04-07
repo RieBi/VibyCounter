@@ -178,6 +178,16 @@ export const useCounterShop = create<CounterState>()(
                 to: String(updates.count),
               });
 
+            if (
+              updates.locked !== undefined &&
+              updates.locked !== (counter.locked ?? false)
+            )
+              changes.push({
+                field: 'Locked',
+                from: String(counter.locked ?? false),
+                to: String(updates.locked),
+              });
+
             if (updates.settings) {
               const s = counter.settings;
               const u = updates.settings;
@@ -256,7 +266,7 @@ export const useCounterShop = create<CounterState>()(
 
       increment: (id, amount, mergeHistoryRowId) => {
         const counter = get().counters.find((c) => c.id === id);
-        if (!counter) return undefined;
+        if (!counter || counter.locked) return undefined;
 
         let newValue = counter.count + amount;
         if (counter.settings.minValue != null)
@@ -302,44 +312,59 @@ export const useCounterShop = create<CounterState>()(
         return rowId;
       },
 
-      resetCounter: (id) =>
+      resetCounter: (id) => {
+        const c = get().counters.find((x) => x.id === id);
+        if (!c || c.locked) return;
         set((state) => ({
-          counters: state.counters.map((c) => {
-            if (c.id !== id) return c;
+          counters: state.counters.map((counter) => {
+            if (counter.id !== id) return counter;
             const now = Date.now();
-            appendHistoryEntry(c.id, {
+            appendHistoryEntry(counter.id, {
               type: HistoryAction.Reset,
               timestamp: now,
             });
             return {
-              ...c,
-              count: c.settings.defaultValue,
+              ...counter,
+              count: counter.settings.defaultValue,
               lastActionAt: now,
-              historyCount: c.historyCount + 1,
+              historyCount: counter.historyCount + 1,
             };
           }),
-        })),
+        }));
+      },
 
-      deleteCounter: (id) =>
+      deleteCounter: (id) => {
+        const c = get().counters.find((x) => x.id === id);
+        if (!c || c.locked) return;
         set((state) => {
           deleteHistoryForCounter(id);
           return {
-            counters: state.counters.filter((c) => c.id !== id),
+            counters: state.counters.filter((counter) => counter.id !== id),
           };
-        }),
+        });
+      },
 
       deleteCounters: (ids) =>
         set((state) => {
-          deleteHistoryForCounters([...ids]);
+          const unlockedIds = new Set(
+            [...ids].filter((id) => {
+              const c = state.counters.find((x) => x.id === id);
+              return c && !c.locked;
+            }),
+          );
+          if (unlockedIds.size === 0) return {};
+          deleteHistoryForCounters([...unlockedIds]);
           return {
-            counters: state.counters.filter((c) => !ids.has(c.id)),
+            counters: state.counters.filter((c) => !unlockedIds.has(c.id)),
           };
         }),
 
       softDeleteCounter: (id) => {
+        const c = get().counters.find((x) => x.id === id);
+        if (!c || c.locked) return;
         if (get().pendingDelete) set({ pendingDelete: null });
         set((state) => {
-          const idx = state.counters.findIndex((c) => c.id === id);
+          const idx = state.counters.findIndex((x) => x.id === id);
           if (idx === -1) return {};
           return {
             pendingDelete: {
@@ -355,10 +380,16 @@ export const useCounterShop = create<CounterState>()(
       softDeleteCounters: (ids) => {
         if (get().pendingDelete) set({ pendingDelete: null });
         set((state) => {
+          const unlockedIds = new Set(
+            [...ids].filter((id) => {
+              const c = state.counters.find((x) => x.id === id);
+              return c && !c.locked;
+            }),
+          );
           const positions: [string, number][] = [];
           const deleted: Counter[] = [];
           state.counters.forEach((c, i) => {
-            if (ids.has(c.id)) {
+            if (unlockedIds.has(c.id)) {
               positions.push([c.id, i]);
               deleted.push({ ...c });
             }
@@ -370,7 +401,7 @@ export const useCounterShop = create<CounterState>()(
               deletedCounters: deleted,
               counterPositions: positions,
             },
-            counters: state.counters.filter((c) => !ids.has(c.id)),
+            counters: state.counters.filter((c) => !unlockedIds.has(c.id)),
           };
         });
       },
@@ -472,6 +503,7 @@ export const useCounterShop = create<CounterState>()(
             createdAt: now,
             lastActionAt: now,
             historyCount: duplication.copyHistory ? source.historyCount : 1,
+            locked: false,
           };
           if (duplication.copyHistory) {
             duplicateCounterHistory(source.id, duplicateId);

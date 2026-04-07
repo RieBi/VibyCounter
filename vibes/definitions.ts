@@ -19,7 +19,8 @@ export interface Counter {
     color: string;
     icon?: string;
   };
-
+  /** When true, value cannot be changed from the list and the counter cannot be reset or deleted until unlocked in edit. */
+  locked?: boolean;
 }
 
 export interface Group {

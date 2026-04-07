@@ -6,6 +6,7 @@ import {
   Modal,
   Pressable,
   ScrollView,
+  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -60,6 +61,7 @@ export default function EditCounterModal({
   const [minValue, setMinValue] = useState('0');
   const [maxValue, setMaxValue] = useState('100');
   const [goal, setGoal] = useState('');
+  const [locked, setLocked] = useState(false);
 
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
@@ -125,6 +127,7 @@ export default function EditCounterModal({
           ? String(counterToEdit.settings.goal)
           : '',
       );
+      setLocked(counterToEdit.locked ?? false);
       setValidationMessage(null);
     }
   }, [counterToEdit]);
@@ -178,6 +181,7 @@ export default function EditCounterModal({
     updateCounter(counterId, {
       label,
       count: parsedCurrent,
+      locked,
       settings: {
         defaultValue: parsedDefault,
         incrementBy: Number(incrementBy) || 1,
@@ -238,7 +242,12 @@ export default function EditCounterModal({
                 </Text>
                 <View className='flex-row gap-4'>
                   <TouchableOpacity
-                    onPress={() => setConfirmDeleteVisible(true)}
+                    disabled={locked}
+                    onPress={() => {
+                      if (locked) return;
+                      setConfirmDeleteVisible(true);
+                    }}
+                    style={{ opacity: locked ? 0.35 : 1 }}
                   >
                     <MaterialIcons
                       color='#f87171'
@@ -309,14 +318,44 @@ export default function EditCounterModal({
                     onMaxEnabledChange={setMaxEnabled}
                     onMaxValueChange={setMaxValue}
                   />
+
+                  <View className='flex-row items-start justify-between py-3 gap-3 mb-2 border-t border-emerald-700/50 mt-2'>
+                    <View className='flex-1 pr-2'>
+                      <Text className='text-emerald-200 text-base font-medium'>
+                        Lock counter
+                      </Text>
+                      <Text className='text-emerald-400/90 text-sm mt-1'>
+                        Prevents changing the value from the list and swipe delete
+                        until you unlock here.
+                      </Text>
+                    </View>
+                    <Switch
+                      value={locked}
+                      onValueChange={setLocked}
+                      trackColor={{ false: '#065f46', true: '#84cc16' }}
+                      thumbColor='#f0fdf4'
+                    />
+                  </View>
+
                   <TouchableOpacity
                     className='mb-4 self-start'
-                    onPress={() => setConfirmResetVisible(true)}
+                    disabled={locked}
+                    onPress={() => {
+                      if (locked) return;
+                      setConfirmResetVisible(true);
+                    }}
                   >
-                    <Text className='text-rose-400 font-semibold'>
+                    <Text
+                      className={`font-semibold ${locked ? 'text-rose-400/40' : 'text-rose-400'}`}
+                    >
                       Reset counter
                     </Text>
                   </TouchableOpacity>
+                  {locked && (
+                    <Text className='text-emerald-400/80 text-sm mb-4'>
+                      Unlock to reset or delete this counter.
+                    </Text>
+                  )}
                 </ScrollView>
               </View>
 

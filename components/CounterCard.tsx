@@ -43,6 +43,7 @@ export default function CounterCard({
   const counter = useCounterShop((state) =>
     state.counters.find((c) => c.id === counterId),
   );
+  const locked = !!counter?.locked;
 
   const increment = useCounterShop((state) => state.increment);
   const hapticsEnabled = useSettingsShop((state) => state.display.hapticsEnabled);
@@ -61,6 +62,7 @@ export default function CounterCard({
 
   const startRepeat = useCallback(
     (amount: number) => {
+      if (locked) return;
       triggerImpact(Haptics.ImpactFeedbackStyle.Soft);
       const rowId = increment(counterId, amount);
       holdHistoryRowId.current = rowId ?? null;
@@ -74,7 +76,7 @@ export default function CounterCard({
       }, 400);
       repeatTimer.current = delay as unknown as ReturnType<typeof setInterval>;
     },
-    [counterId, increment, triggerImpact],
+    [counterId, increment, locked, triggerImpact],
   );
 
   const stopRepeat = useCallback(() => {
@@ -136,7 +138,11 @@ export default function CounterCard({
         }
         if (didMove) didMove.value = true;
       }}
-      style={{ backgroundColor: color }}
+      style={{
+        backgroundColor: color,
+        borderWidth: locked ? 2 : 0,
+        borderColor: locked ? (light ? '#b45309' : '#fbbf24') : 'transparent',
+      }}
       className='mx-3 my-1.5 px-4 py-3 rounded-2xl'
     >
       {/* Dim overlay when selecting but not selected */}
@@ -162,6 +168,9 @@ export default function CounterCard({
               color={textColor}
             />
           )}
+          {locked && (
+            <MaterialIcons name='lock' size={16} color={textColor} style={{ opacity: 0.9 }} />
+          )}
           <Text
             style={{ color: textColor }}
             className='text-sm font-semibold flex-1'
@@ -181,8 +190,9 @@ export default function CounterCard({
       <View className='flex-row items-center justify-center pt-1 pb-3'>
         <TouchableOpacity
           activeOpacity={0.7}
-          style={{ backgroundColor: btnBg }}
+          style={{ backgroundColor: btnBg, opacity: locked ? 0.45 : 1 }}
           className='h-14 w-14 rounded-full items-center justify-center'
+          disabled={locked}
           onPressIn={() => startRepeat(-counter.settings.decrementBy)}
           onPressOut={stopRepeat}
         >
@@ -217,8 +227,9 @@ export default function CounterCard({
 
         <TouchableOpacity
           activeOpacity={0.7}
-          style={{ backgroundColor: btnBg }}
+          style={{ backgroundColor: btnBg, opacity: locked ? 0.45 : 1 }}
           className='h-14 w-14 rounded-full items-center justify-center'
+          disabled={locked}
           onPressIn={() => startRepeat(counter.settings.incrementBy)}
           onPressOut={stopRepeat}
         >
