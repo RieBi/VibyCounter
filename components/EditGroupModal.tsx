@@ -17,12 +17,14 @@ interface EditGroupModalProps {
   groupId: string | null;
   onClose: () => void;
   onDeleted: (id: string) => void;
+  onExport: (id: string) => void;
 }
 
 export default function EditGroupModal({
   groupId,
   onClose,
   onDeleted,
+  onExport,
 }: EditGroupModalProps) {
   const [name, setName] = useState('');
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
@@ -138,6 +140,12 @@ export default function EditGroupModal({
                 onPress={onClose}
               >
                 <Text className='text-white font-bold'>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className='bg-emerald-700 p-3 px-6 rounded-xl'
+                onPress={() => groupId && onExport(groupId)}
+              >
+                <Text className='text-white font-bold'>Export</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className='bg-lime-600 p-3 px-6 rounded-xl'

@@ -1,8 +1,10 @@
 import { useCounterShop } from '@/shop/counterShop';
+import { shareExportPayload } from '@/vibes/importExport';
 import { Group } from '@/vibes/definitions';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   BackHandler,
   Dimensions,
   Keyboard,
@@ -94,6 +96,9 @@ export default function GroupDrawer({
 }: GroupDrawerProps) {
   const groups = useCounterShop((state) => state.groups);
   const addGroup = useCounterShop((state) => state.addGroup);
+  const buildGroupExportPayload = useCounterShop(
+    (state) => state.buildGroupExportPayload,
+  );
 
   const [newGroupName, setNewGroupName] = useState('');
   const [mounted, setMounted] = useState(false);
@@ -334,6 +339,18 @@ export default function GroupDrawer({
             onDeleted={(id) => {
               if (id === selectedGroupId) {
                 onSelectGroup(groups[0].id);
+              }
+            }}
+            onExport={async (id) => {
+              const payload = buildGroupExportPayload(id);
+              if (!payload) return;
+              try {
+                await shareExportPayload(payload);
+              } catch (error) {
+                Alert.alert(
+                  'Export failed',
+                  error instanceof Error ? error.message : 'Unable to export group.',
+                );
               }
             }}
           />

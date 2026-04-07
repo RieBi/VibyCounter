@@ -32,6 +32,11 @@ export type HistoryPage = {
   hasMore: boolean;
 };
 
+export type HistoryExportRecord = {
+  counterId: string;
+  entry: HistoryEntry;
+};
+
 let db: SQLite.SQLiteDatabase | null = null;
 
 function getDb() {
@@ -94,6 +99,33 @@ function parsePayload(value: string | null): unknown {
   } catch {
     return undefined;
   }
+}
+
+function toHistoryEntry(row: DbHistoryRow): HistoryEntry {
+  const payload = parsePayload(row.payload_json) as { changes?: HistoryEntryChange[] };
+  const entry: HistoryEntry = {
+    type: row.action_type as HistoryAction,
+    timestamp: row.ts,
+  };
+
+  if (
+    row.action_type === HistoryAction.Increment &&
+    row.delta != null &&
+    row.value_before != null &&
+    row.value_after != null
+  ) {
+    entry.details = {
+      incrementBy: row.delta,
+      valueBefore: row.value_before,
+      valueAfter: row.value_after,
+    };
+  }
+
+  if (row.action_type === HistoryAction.SettingsChange && payload?.changes) {
+    entry.changes = payload.changes;
+  }
+
+  return entry;
 }
 
 function updateDailyStat(counterId: string, ts: number, delta: number) {
@@ -229,6 +261,67 @@ export function duplicateCounterHistory(sourceCounterId: string, targetCounterId
   );
 }
 
+export function getHistoryEntriesForCounters(counterIds: string[]): HistoryExportRecord[] {
+  if (counterIds.length === 0) return [];
+
+  const database = getDb();
+  const placeholders = counterIds.map(() => '?').join(',');
+  const rows = database.getAllSync<(DbHistoryRow & { counter_id: string })>(
+    `
+      SELECT counter_id, id, ts, action_type, value_before, value_after, delta, payload_json
+      FROM counter_history
+      WHERE counter_id IN (${placeholders})
+      ORDER BY counter_id ASC, ts ASC, id ASC;
+    `,
+    counterIds,
+  );
+
+  return rows.map((row) => ({
+    counterId: row.counter_id,
+    entry: toHistoryEntry(row),
+  }));
+}
+
+export function replaceAllHistoryEntries(records: HistoryExportRecord[]) {
+  const database = getDb();
+  database.execSync('BEGIN TRANSACTION;');
+  try {
+    database.execSync('DELETE FROM counter_history; DELETE FROM history_daily_stats;');
+
+    for (const record of records) {
+      const entry = record.entry;
+      database.runSync(
+        `
+          INSERT INTO counter_history(
+            counter_id,
+            ts,
+            action_type,
+            value_before,
+            value_after,
+            delta,
+            payload_json
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?);
+        `,
+        [
+          record.counterId,
+          entry.timestamp,
+          entry.type,
+          entry.details?.valueBefore ?? null,
+          entry.details?.valueAfter ?? null,
+          entry.details?.incrementBy ?? null,
+          serializePayload({ changes: entry.changes }),
+        ],
+      );
+      updateDailyStat(record.counterId, entry.timestamp, 1);
+    }
+    database.execSync('COMMIT;');
+  } catch (error) {
+    database.execSync('ROLLBACK;');
+    throw error;
+  }
+}
+
 export function getHistoryPage(
   counterId: string,
   opts: {
@@ -266,32 +359,7 @@ export function getHistoryPage(
   );
 
   const rowsForPage = rows.slice(0, opts.limit);
-  const items = rowsForPage.map((row) => {
-    const payload = parsePayload(row.payload_json) as { changes?: HistoryEntryChange[] };
-    const entry: HistoryEntry = {
-      type: row.action_type as HistoryAction,
-      timestamp: row.ts,
-    };
-
-    if (
-      row.action_type === HistoryAction.Increment &&
-      row.delta != null &&
-      row.value_before != null &&
-      row.value_after != null
-    ) {
-      entry.details = {
-        incrementBy: row.delta,
-        valueBefore: row.value_before,
-        valueAfter: row.value_after,
-      };
-    }
-
-    if (row.action_type === HistoryAction.SettingsChange && payload?.changes) {
-      entry.changes = payload.changes;
-    }
-
-    return entry;
-  });
+  const items = rowsForPage.map((row) => toHistoryEntry(row));
 
   const hasMore = rows.length > opts.limit;
   const lastRow = rowsForPage[rowsForPage.length - 1];

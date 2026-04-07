@@ -13,10 +13,11 @@ import { useSelection } from '@/hooks/useSelection';
 import { useSort } from '@/hooks/useSort';
 import { PendingDelete, useCounterShop } from '@/shop/counterShop';
 import { Counter, DefaultGroup, sortCounters } from '@/vibes/definitions';
+import { shareExportPayload } from '@/vibes/importExport';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import { Gesture } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import ReorderableList, {
@@ -108,6 +109,9 @@ export default function CountersScreen() {
   // --- Reordering ---
   const reorderCounters = useCounterShop((state) => state.reorderCounters);
   const duplicateCounter = useCounterShop((state) => state.duplicateCounter);
+  const buildCounterExportPayload = useCounterShop(
+    (state) => state.buildCounterExportPayload,
+  );
   const didMoveCounter = useSharedValue(true);
   const reorderable = searchQuery.trim() === '' && isManualOrder && !selecting;
 
@@ -270,6 +274,20 @@ export default function CountersScreen() {
             if (!actionsId) return;
             duplicateCounter(actionsId);
             setActionsId(null);
+          }}
+          onExport={async () => {
+            if (!actionsId) return;
+            const payload = buildCounterExportPayload(actionsId);
+            setActionsId(null);
+            if (!payload) return;
+            try {
+              await shareExportPayload(payload);
+            } catch (error) {
+              Alert.alert(
+                'Export failed',
+                error instanceof Error ? error.message : 'Unable to export counter.',
+              );
+            }
           }}
           onClose={() => setActionsId(null)}
         />
