@@ -7,6 +7,13 @@ import Animated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated
 
 import VibyInput from './reusable/VibyInput';
 
+const iconHitSlop = {
+  top: 10,
+  bottom: 10,
+  left: 10,
+  right: 10,
+};
+
 interface IndexHeaderProps {
   // Selection
   selecting: boolean;
@@ -67,6 +74,7 @@ export default function IndexHeader({
           <TouchableOpacity
             className='bg-zinc-100 p-2 rounded-xl'
             onPress={onClearSelection}
+            hitSlop={iconHitSlop}
           >
             <MaterialIcons name='arrow-back' size={22} color='#3f3f46' />
           </TouchableOpacity>
@@ -78,17 +86,17 @@ export default function IndexHeader({
               {selectedCount} selected
             </Text>
             <View className='flex-row items-center gap-4'>
-              <TouchableOpacity onPress={onSelectAll}>
+              <TouchableOpacity onPress={onSelectAll} hitSlop={iconHitSlop}>
                 <MaterialIcons name='select-all' size={22} color='#71717a' />
               </TouchableOpacity>
-              <TouchableOpacity onPress={onMoveSelected}>
+              <TouchableOpacity onPress={onMoveSelected} hitSlop={iconHitSlop}>
                 <MaterialIcons
                   name='drive-file-move-outline'
                   size={22}
                   color='#71717a'
                 />
               </TouchableOpacity>
-              <TouchableOpacity onPress={onDeleteSelected}>
+              <TouchableOpacity onPress={onDeleteSelected} hitSlop={iconHitSlop}>
                 <MaterialIcons
                   name='delete-outline'
                   size={22}
@@ -104,7 +112,11 @@ export default function IndexHeader({
           style={searchStyle}
           className='flex-1 flex-row items-center bg-zinc-100 rounded-xl px-2'
         >
-          <TouchableOpacity onPress={onCloseSearch} className='p-1'>
+          <TouchableOpacity
+            onPress={onCloseSearch}
+            className='p-1'
+            hitSlop={iconHitSlop}
+          >
             <MaterialIcons name='arrow-back' size={22} color='#71717a' />
           </TouchableOpacity>
           <VibyInput
@@ -120,6 +132,7 @@ export default function IndexHeader({
             <TouchableOpacity
               onPress={() => onSearchChange('')}
               className='p-1'
+              hitSlop={iconHitSlop}
             >
               <MaterialIcons name='close' size={22} color='#71717a' />
             </TouchableOpacity>
@@ -134,38 +147,45 @@ export default function IndexHeader({
           <TouchableOpacity
             className='bg-zinc-100 p-2 rounded-xl'
             onPress={onOpenDrawer}
+            hitSlop={iconHitSlop}
           >
             <AntDesign name='menu' size={22} color='#3f3f46' />
           </TouchableOpacity>
 
           <View className='flex-1 flex-row items-center justify-between bg-zinc-100 px-4 py-2 rounded-xl'>
-            {selectedGroup.styling?.icon && (
-              <MaterialIcons
-                name={
-                  selectedGroup.styling
-                    .icon as keyof typeof MaterialIcons.glyphMap
-                }
-                size={18}
-                color='#52525b'
-                style={{ marginRight: 8 }}
-              />
-            )}
-            <Text
-              className='flex-1 font-semibold text-lg text-zinc-700'
-              numberOfLines={1}
-              style={{ lineHeight: 18 }}
+            <TouchableOpacity
+              onPress={onOpenSearch}
+              className='flex-1 flex-row items-center'
+              hitSlop={iconHitSlop}
             >
-              {selectedGroup.name}
-            </Text>
+              {selectedGroup.styling?.icon && (
+                <MaterialIcons
+                  name={
+                    selectedGroup.styling
+                      .icon as keyof typeof MaterialIcons.glyphMap
+                  }
+                  size={18}
+                  color='#52525b'
+                  style={{ marginRight: 8 }}
+                />
+              )}
+              <Text
+                className='flex-1 font-semibold text-lg text-zinc-700'
+                numberOfLines={1}
+                style={{ lineHeight: 18 }}
+              >
+                {selectedGroup.name}
+              </Text>
+            </TouchableOpacity>
             <View className='flex-row items-center gap-3'>
-              <TouchableOpacity onPress={onOpenSort}>
+              <TouchableOpacity onPress={onOpenSort} hitSlop={iconHitSlop}>
                 <MaterialIcons
                   name='sort'
                   size={22}
                   color={isManualOrder ? '#71717a' : '#059669'}
                 />
               </TouchableOpacity>
-              <TouchableOpacity onPress={onOpenSearch}>
+              <TouchableOpacity onPress={onOpenSearch} hitSlop={iconHitSlop}>
                 <MaterialIcons name='search' size={22} color='#71717a' />
               </TouchableOpacity>
             </View>
