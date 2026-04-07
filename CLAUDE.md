@@ -1,3 +1,8 @@
+---
+description: 
+alwaysApply: true
+---
+
 # CLAUDE.md
 
 ## Commands
@@ -48,6 +53,7 @@ Use `useShallow` from `zustand/react/shallow` when selecting derived arrays
 
 - **Never put modals inside list items** — each `Modal` allocates native resources even when `visible={false}`. Lift shared modals to the parent screen, pass IDs through state.
 - Close-on-backdrop pattern: outer `Pressable onPress={onClose}` wrapping inner `Pressable className='w-full'` (no `onPress`) to block propagation.
+- Never use blank Alert. Instead use modals or custom views.
 
 ### Gotchas
 

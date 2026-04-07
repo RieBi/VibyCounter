@@ -156,7 +156,7 @@ export function appendHistoryEntry(
     delta?: number;
     changes?: HistoryEntryChange[];
   },
-) {
+): number {
   const database = getDb();
   database.runSync(
     `
@@ -182,6 +182,47 @@ export function appendHistoryEntry(
     ],
   );
   updateDailyStat(counterId, entry.timestamp, 1);
+  const row = database.getFirstSync<{ id: number }>(
+    `SELECT last_insert_rowid() AS id;`,
+  );
+  return row?.id ?? 0;
+}
+
+export function updateIncrementHistoryEntry(
+  counterId: string,
+  rowId: number,
+  updates: { timestamp: number; valueAfter: number },
+): boolean {
+  const database = getDb();
+  const existing = database.getFirstSync<{ ts: number; value_before: number | null }>(
+    `
+      SELECT ts, value_before FROM counter_history
+      WHERE id = ? AND counter_id = ? AND action_type = ?
+    `,
+    [rowId, counterId, HistoryAction.Increment],
+  );
+  if (!existing || existing.value_before == null) return false;
+
+  const oldTs = existing.ts;
+  const valueBefore = existing.value_before;
+  const newDelta = updates.valueAfter - valueBefore;
+
+  database.runSync(
+    `
+      UPDATE counter_history
+      SET ts = ?, value_after = ?, delta = ?
+      WHERE id = ? AND counter_id = ?
+    `,
+    [updates.timestamp, updates.valueAfter, newDelta, rowId, counterId],
+  );
+
+  const oldDay = getDayKey(oldTs);
+  const newDay = getDayKey(updates.timestamp);
+  if (oldDay !== newDay) {
+    updateDailyStat(counterId, oldTs, -1);
+    updateDailyStat(counterId, updates.timestamp, 1);
+  }
+  return true;
 }
 
 export function clearHistoryEntries(counterId: string): number {

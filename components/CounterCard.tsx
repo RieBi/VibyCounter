@@ -49,6 +49,7 @@ export default function CounterCard({
 
   const justLongPressed = useRef(false);
   const repeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const holdHistoryRowId = useRef<number | null>(null);
 
   const triggerImpact = useCallback(
     (style: Haptics.ImpactFeedbackStyle) => {
@@ -61,11 +62,14 @@ export default function CounterCard({
   const startRepeat = useCallback(
     (amount: number) => {
       triggerImpact(Haptics.ImpactFeedbackStyle.Soft);
-      increment(counterId, amount);
+      const rowId = increment(counterId, amount);
+      holdHistoryRowId.current = rowId ?? null;
       const delay = setTimeout(() => {
+        const mergeId = holdHistoryRowId.current;
+        if (mergeId == null) return;
         repeatTimer.current = setInterval(() => {
           triggerImpact(Haptics.ImpactFeedbackStyle.Soft);
-          increment(counterId, amount);
+          increment(counterId, amount, mergeId);
         }, 80);
       }, 400);
       repeatTimer.current = delay as unknown as ReturnType<typeof setInterval>;
@@ -74,6 +78,7 @@ export default function CounterCard({
   );
 
   const stopRepeat = useCallback(() => {
+    holdHistoryRowId.current = null;
     if (repeatTimer.current !== null) {
       clearTimeout(
         repeatTimer.current as unknown as ReturnType<typeof setTimeout>,

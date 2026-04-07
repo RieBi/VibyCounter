@@ -8,6 +8,7 @@ import {
   getHistoryEntriesForCounters,
   HistoryExportRecord,
   replaceAllHistoryEntries,
+  updateIncrementHistoryEntry,
 } from '@/data/historyDb';
 import {
   AllExportPayload,
@@ -72,7 +73,11 @@ interface CounterState {
     styling: Counter['styling'],
   ) => void;
   updateCounter: (id: string, updates: Partial<Counter>) => void;
-  increment: (id: string, amount: number) => void;
+  increment: (
+    id: string,
+    amount: number,
+    mergeHistoryRowId?: number,
+  ) => number | undefined;
   resetCounter: (id: string) => void;
   deleteCounter: (id: string) => void;
   deleteCounters: (ids: Set<string>) => void;
@@ -249,31 +254,53 @@ export const useCounterShop = create<CounterState>()(
           }),
         })),
 
-      increment: (id, amount) =>
+      increment: (id, amount, mergeHistoryRowId) => {
+        const counter = get().counters.find((c) => c.id === id);
+        if (!counter) return undefined;
+
+        let newValue = counter.count + amount;
+        if (counter.settings.minValue != null)
+          newValue = Math.max(newValue, counter.settings.minValue);
+        if (counter.settings.maxValue != null)
+          newValue = Math.min(newValue, counter.settings.maxValue);
+        const now = Date.now();
+
+        if (mergeHistoryRowId != null) {
+          const merged = updateIncrementHistoryEntry(id, mergeHistoryRowId, {
+            timestamp: now,
+            valueAfter: newValue,
+          });
+          if (merged) {
+            set((state) => ({
+              counters: state.counters.map((c) =>
+                c.id === id ? { ...c, count: newValue, lastActionAt: now } : c,
+              ),
+            }));
+            return mergeHistoryRowId;
+          }
+        }
+
+        const rowId = appendHistoryEntry(counter.id, {
+          type: HistoryAction.Increment,
+          timestamp: now,
+          valueBefore: counter.count,
+          valueAfter: newValue,
+          delta: newValue - counter.count,
+        });
         set((state) => ({
-          counters: state.counters.map((counter) => {
-            if (counter.id !== id) return counter;
-            let newValue = counter.count + amount;
-            if (counter.settings.minValue != null)
-              newValue = Math.max(newValue, counter.settings.minValue);
-            if (counter.settings.maxValue != null)
-              newValue = Math.min(newValue, counter.settings.maxValue);
-            const now = Date.now();
-            appendHistoryEntry(counter.id, {
-              type: HistoryAction.Increment,
-              timestamp: now,
-              valueBefore: counter.count,
-              valueAfter: newValue,
-              delta: amount,
-            });
-            return {
-              ...counter,
-              count: newValue,
-              lastActionAt: now,
-              historyCount: counter.historyCount + 1,
-            };
-          }),
-        })),
+          counters: state.counters.map((c) =>
+            c.id === id
+              ? {
+                  ...c,
+                  count: newValue,
+                  lastActionAt: now,
+                  historyCount: c.historyCount + 1,
+                }
+              : c,
+          ),
+        }));
+        return rowId;
+      },
 
       resetCounter: (id) =>
         set((state) => ({
