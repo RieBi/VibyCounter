@@ -23,6 +23,9 @@ interface SettingsState {
     insertAfterOriginal: boolean;
     copyHistory: boolean;
   };
+  display: {
+    keepScreenOn: boolean;
+  };
   sort: {
     field: SortField;
     direction: SortDirection;
@@ -34,6 +37,7 @@ interface SettingsState {
   updateDuplicationSettings: (
     updates: Partial<SettingsState['duplication']>,
   ) => void;
+  updateDisplaySettings: (updates: Partial<SettingsState['display']>) => void;
   updateSortSettings: (updates: Partial<SettingsState['sort']>) => void;
   updateGroupSettings: (updates: Partial<SettingsState['groups']>) => void;
 }
@@ -45,6 +49,9 @@ export const useSettingsShop = create<SettingsState>()(
         insertAfterOriginal: true,
         copyHistory: false,
       },
+      display: {
+        keepScreenOn: true,
+      },
       sort: {
         field: 'manual',
         direction: 'asc',
@@ -53,6 +60,10 @@ export const useSettingsShop = create<SettingsState>()(
       updateDuplicationSettings: (updates) =>
         set((state) => ({
           duplication: { ...state.duplication, ...updates },
+        })),
+      updateDisplaySettings: (updates) =>
+        set((state) => ({
+          display: { ...state.display, ...updates },
         })),
       groups: {
         confirmDeleteEmpty: true,
