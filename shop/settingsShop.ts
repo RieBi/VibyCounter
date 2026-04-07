@@ -25,6 +25,7 @@ interface SettingsState {
   };
   display: {
     keepScreenOn: boolean;
+    hapticsEnabled: boolean;
   };
   sort: {
     field: SortField;
@@ -51,6 +52,7 @@ export const useSettingsShop = create<SettingsState>()(
       },
       display: {
         keepScreenOn: true,
+        hapticsEnabled: true,
       },
       sort: {
         field: 'manual',

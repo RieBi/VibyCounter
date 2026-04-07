@@ -1,4 +1,5 @@
 import { useCounterShop } from '@/shop/counterShop';
+import { useSettingsShop } from '@/shop/settingsShop';
 import {
   DefaultColor,
   getProgress,
@@ -44,23 +45,32 @@ export default function CounterCard({
   );
 
   const increment = useCounterShop((state) => state.increment);
+  const hapticsEnabled = useSettingsShop((state) => state.display.hapticsEnabled);
 
   const justLongPressed = useRef(false);
   const repeatTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const triggerImpact = useCallback(
+    (style: Haptics.ImpactFeedbackStyle) => {
+      if (!hapticsEnabled) return;
+      Haptics.impactAsync(style);
+    },
+    [hapticsEnabled],
+  );
+
   const startRepeat = useCallback(
     (amount: number) => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+      triggerImpact(Haptics.ImpactFeedbackStyle.Soft);
       increment(counterId, amount);
       const delay = setTimeout(() => {
         repeatTimer.current = setInterval(() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+          triggerImpact(Haptics.ImpactFeedbackStyle.Soft);
           increment(counterId, amount);
         }, 80);
       }, 400);
       repeatTimer.current = delay as unknown as ReturnType<typeof setInterval>;
     },
-    [counterId, increment],
+    [counterId, increment, triggerImpact],
   );
 
   const stopRepeat = useCallback(() => {
@@ -90,7 +100,7 @@ export default function CounterCard({
       return;
     }
     if (selecting) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      triggerImpact(Haptics.ImpactFeedbackStyle.Light);
       onSelect?.();
     } else {
       onEdit();
@@ -110,13 +120,13 @@ export default function CounterCard({
             ? undefined
             : () => {
                 justLongPressed.current = true;
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                triggerImpact(Haptics.ImpactFeedbackStyle.Medium);
                 onSelect?.();
               }
       }
       onPressOut={() => {
         if (reorderable && didMove && !didMove.value) {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          triggerImpact(Haptics.ImpactFeedbackStyle.Medium);
           onSelect?.();
         }
         if (didMove) didMove.value = true;
