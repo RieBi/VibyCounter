@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Native builds
+android/
+ios/
+
+# Assets (binary files, no useful context)
+assets/fonts/
+assets/images/
+assets/icons/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ttf
+*.otf
+*.wav
+*.mp3
+
+# Build & cache
+.cache/
+*.tsbuildinfo
+
+# Environment & secrets
+.env*
+
+# IDE / OS
+.vscode/
+.idea/
+*.DS_Store
+
+# Lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Misc
+coverage/
+__tests__/snapshots/
