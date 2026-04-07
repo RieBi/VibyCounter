@@ -1,4 +1,8 @@
-import { HistoryAction, HistoryEntry, HistoryEntryChange } from '@/vibes/definitions';
+import {
+  HistoryAction,
+  HistoryEntry,
+  HistoryEntryChange,
+} from '@/vibes/definitions';
 import * as SQLite from 'expo-sqlite';
 
 type DbHistoryRow = {
@@ -102,7 +106,9 @@ function parsePayload(value: string | null): unknown {
 }
 
 function toHistoryEntry(row: DbHistoryRow): HistoryEntry {
-  const payload = parsePayload(row.payload_json) as { changes?: HistoryEntryChange[] };
+  const payload = parsePayload(row.payload_json) as {
+    changes?: HistoryEntryChange[];
+  };
   const entry: HistoryEntry = {
     type: row.action_type as HistoryAction,
     timestamp: row.ts,
@@ -140,6 +146,20 @@ function updateDailyStat(counterId: string, ts: number, delta: number) {
     `,
     [counterId, dayKey, delta],
   );
+}
+
+function rebuildDailyStatsForCounter(counterId: string) {
+  const database = getDb();
+  database.runSync(`DELETE FROM history_daily_stats WHERE counter_id = ?`, [
+    counterId,
+  ]);
+  const rows = database.getAllSync<{ ts: number }>(
+    `SELECT ts FROM counter_history WHERE counter_id = ?`,
+    [counterId],
+  );
+  for (const row of rows) {
+    updateDailyStat(counterId, row.ts, 1);
+  }
 }
 
 export function initHistoryDb() {
@@ -194,7 +214,10 @@ export function updateIncrementHistoryEntry(
   updates: { timestamp: number; valueAfter: number },
 ): boolean {
   const database = getDb();
-  const existing = database.getFirstSync<{ ts: number; value_before: number | null }>(
+  const existing = database.getFirstSync<{
+    ts: number;
+    value_before: number | null;
+  }>(
     `
       SELECT ts, value_before FROM counter_history
       WHERE id = ? AND counter_id = ? AND action_type = ?
@@ -225,32 +248,29 @@ export function updateIncrementHistoryEntry(
   return true;
 }
 
-export function clearHistoryEntries(counterId: string): number {
+/** Removes all history except Creation rows, then rebuilds daily stats. Returns row count after clear. */
+export function clearHistoryKeepingCreation(counterId: string): number {
   const database = getDb();
-  const rows = database.getAllSync<DbDailyStatRow>(
-    `SELECT day_key, entry_count FROM history_daily_stats WHERE counter_id = ?;`,
+  database.runSync(
+    `DELETE FROM counter_history WHERE counter_id = ? AND action_type != ?`,
+    [counterId, HistoryAction.Creation],
+  );
+  rebuildDailyStatsForCounter(counterId);
+  const row = database.getFirstSync<{ n: number }>(
+    `SELECT COUNT(*) AS n FROM counter_history WHERE counter_id = ?`,
     [counterId],
   );
-  for (const row of rows) {
-    if (row.entry_count > 0) {
-      database.runSync(
-        `
-          UPDATE history_daily_stats
-          SET entry_count = 0
-          WHERE counter_id = ? AND day_key = ?;
-        `,
-        [counterId, row.day_key],
-      );
-    }
-  }
-  database.runSync(`DELETE FROM counter_history WHERE counter_id = ?;`, [counterId]);
-  return rows.reduce((sum, row) => sum + row.entry_count, 0);
+  return row?.n ?? 0;
 }
 
 export function deleteHistoryForCounter(counterId: string) {
   const database = getDb();
-  database.runSync(`DELETE FROM counter_history WHERE counter_id = ?;`, [counterId]);
-  database.runSync(`DELETE FROM history_daily_stats WHERE counter_id = ?;`, [counterId]);
+  database.runSync(`DELETE FROM counter_history WHERE counter_id = ?;`, [
+    counterId,
+  ]);
+  database.runSync(`DELETE FROM history_daily_stats WHERE counter_id = ?;`, [
+    counterId,
+  ]);
 }
 
 export function deleteHistoryForCounters(counterIds: string[]) {
@@ -268,7 +288,10 @@ export function deleteHistoryForCounters(counterIds: string[]) {
   );
 }
 
-export function duplicateCounterHistory(sourceCounterId: string, targetCounterId: string) {
+export function duplicateCounterHistory(
+  sourceCounterId: string,
+  targetCounterId: string,
+) {
   const database = getDb();
   database.runSync(
     `
@@ -302,12 +325,14 @@ export function duplicateCounterHistory(sourceCounterId: string, targetCounterId
   );
 }
 
-export function getHistoryEntriesForCounters(counterIds: string[]): HistoryExportRecord[] {
+export function getHistoryEntriesForCounters(
+  counterIds: string[],
+): HistoryExportRecord[] {
   if (counterIds.length === 0) return [];
 
   const database = getDb();
   const placeholders = counterIds.map(() => '?').join(',');
-  const rows = database.getAllSync<(DbHistoryRow & { counter_id: string })>(
+  const rows = database.getAllSync<DbHistoryRow & { counter_id: string }>(
     `
       SELECT counter_id, id, ts, action_type, value_before, value_after, delta, payload_json
       FROM counter_history
@@ -327,7 +352,9 @@ export function replaceAllHistoryEntries(records: HistoryExportRecord[]) {
   const database = getDb();
   database.execSync('BEGIN TRANSACTION;');
   try {
-    database.execSync('DELETE FROM counter_history; DELETE FROM history_daily_stats;');
+    database.execSync(
+      'DELETE FROM counter_history; DELETE FROM history_daily_stats;',
+    );
 
     for (const record of records) {
       const entry = record.entry;
@@ -404,7 +431,8 @@ export function getHistoryPage(
 
   const hasMore = rows.length > opts.limit;
   const lastRow = rowsForPage[rowsForPage.length - 1];
-  const nextCursor = hasMore && lastRow ? { ts: lastRow.ts, id: lastRow.id } : null;
+  const nextCursor =
+    hasMore && lastRow ? { ts: lastRow.ts, id: lastRow.id } : null;
 
   return { items, nextCursor, hasMore };
 }

@@ -1,7 +1,7 @@
 import { useSettingsShop } from '@/shop/settingsShop';
 import {
   appendHistoryEntry,
-  clearHistoryEntries,
+  clearHistoryKeepingCreation,
   deleteHistoryForCounter,
   deleteHistoryForCounters,
   duplicateCounterHistory,
@@ -513,17 +513,18 @@ export const useCounterShop = create<CounterState>()(
         set((state) => ({
           counters: state.counters.map((c) => {
             if (c.id !== id) return c;
-            const now = Date.now();
-            clearHistoryEntries(id);
-            appendHistoryEntry(id, {
-              type: HistoryAction.Creation,
-              timestamp: now,
-            });
+            let count = clearHistoryKeepingCreation(id);
+            if (count === 0) {
+              appendHistoryEntry(id, {
+                type: HistoryAction.Creation,
+                timestamp: c.createdAt,
+              });
+              count = 1;
+            }
             return {
               ...c,
-              createdAt: now,
-              lastActionAt: now,
-              historyCount: 1,
+              lastActionAt: Date.now(),
+              historyCount: count,
             };
           }),
         })),
